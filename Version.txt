@@ -74,3 +74,8 @@ SP7 Build 5
         Correction de la longueur des string de Param
 SP7 Build 6
         Correction pour firedac 32 / 64 bits
+SP7 Build 7
+        Gestion des nouveaux icones
+SP7 Build 8
+        Ajout des paramètres optionnels @Choix_Before_Principal dans les procédure _PRINT_MAIL et _PRIN_MAIL_BEFORE
+        Ajout des paramètres optionnels @P1 et @P2 dans la Procedure Before Principal

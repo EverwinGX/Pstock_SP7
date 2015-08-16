@@ -22,7 +22,6 @@ type
     Popup_Niveau: TAdvPopupMenu;
     DvelopperTout1: TMenuItem;
     RduireTout1: TMenuItem;
-    sp_Niveau2: TADOStoredProc;
     sp_Niveau: TADStoredProc;
         procedure MAJ_Arbre_Niveau;
         procedure Explore_Child(curNode: TfcTreeNode; N_Noeud: string);

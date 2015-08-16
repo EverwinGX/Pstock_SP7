@@ -102,6 +102,9 @@ type
     Image1: TImage;
     AdvPicture1: TAdvPicture;
     fcLabel1: TfcLabel;
+    IconeListePNG: TImageList;
+    IconesFiches16PNG: TImageList;
+    wq_Exist_Param: TADQuery;
     procedure BitBtn1Click(Sender: TObject);
 
     procedure AppException(Sender: TObject; E: Exception);
@@ -124,6 +127,7 @@ type
     procedure Read_Excel_Log(Code_Log, Message_Log, Fichier, Feuille: string; N_user: Integer; Cle_Session: string);
     procedure FileSearch(const PathName, Filename: string; const InDir: Boolean; N_user: Integer; Cle_Session: string);
     procedure FileSearch_FIC(const PathName, Filename: string; const InDir: Boolean; N_user: Integer; Cle_Session: string);
+    function Param_Exist(Nom_procedure: string; Nom_Parametre: string): Boolean;
 
   private
     Find_Fenetre: AnsiString;
@@ -304,10 +308,17 @@ begin
     IconesListe.AddIcon(Ico);
   end;
 
+  for i := IconeListePNG.Count + 1 to 150 do
+  begin
+    IconesListe_Plus.GetIcon(0, Ico);
+    IconeListePNG.AddIcon(Ico);
+  end;
+
   for i := 0 to IconesListe_Plus.Count - 1 do
   begin
     IconesListe_Plus.GetIcon(i, Ico);
     IconesListe.AddIcon(Ico);
+    IconeListePNG.AddIcon(Ico);
   end;
 
   if Ico <> nil then
@@ -365,13 +376,14 @@ begin
     // *************************************************************
     Handle_ouverture := N_Handle;
     // Database.AliasName := Db;
+    database.Params.Clear;
 
     Try
       // Connexion FireDac
       ConnexionSecuriseFireDac.AliasBD := Db;
       ConnexionSecuriseFireDac.Connexion;
     Except
-      MessageDlg('Problème d''ouverture de la base de données : ' + Db + #13 + #10 + 'Veuillez vérifier que SQL Server est démarré.' + #13 + #10 + 'Veuillez vérifier les sources de données ODBC.', mtError, [mbOK], 0);
+      MessageDlg('Problème d''ouverture de la base de données : ' + Db + #13 + #10 + 'Veuillez vérifier que SQL Server est démarré.' + #13 + #10 + 'Veuillez vérifier les sources de données ODBC.'+ #13 + #10 + database.ConnectionString , mtError, [mbOK], 0);
       Database.close;
       Application.Terminate;
       Exit;
@@ -434,7 +446,7 @@ begin
     if (Components[i] is TDataSet) and ((Components[i] as TDataSet).Active = True) then (Components[i] as TDataSet)
       .close;
 
-  wq_session.Close;
+  wq_Session.close;
 
   Database.close;
 
@@ -477,16 +489,21 @@ begin
     // WaitForSingleObject(Threadsp.Handle,10000);
     ThreadSPinfo := nil;
   end;
-  wq_session.Close;
+  wq_Session.close;
 
   Database.close;
   Application.Terminate;
-  
+
 end;
 
 function TForm1.Procedure_Exist(Nom_procedure: string): Boolean;
 begin
   Result := wq_Exist.locate('Nom', Nom_procedure, [loCaseInsensitive]);
+end;
+
+function TForm1.Param_Exist(Nom_procedure: string; Nom_Parametre: string): Boolean;
+begin
+  Result := wq_Exist_Param.locate('Recherche', Nom_procedure + '-' + Nom_Parametre, [loCaseInsensitive]);
 end;
 
 procedure TForm1.AdvPicture1FrameChange(Sender: TObject);
@@ -526,6 +543,7 @@ var
   Read_Excel_Rep_Chemin: string;
   Read_Excel_Rep_Indir: Boolean;
   Read_Excel_Rep_Fichier: string;
+  Before_Principal: string;
 
 label
   Suite;
@@ -552,6 +570,10 @@ begin
       wq_Exist.close;
       wq_Exist.SQL[5] := 'AND NAME LIKE ' + quotedstr(Nom_procedure + '%');
       wq_Exist.open;
+
+      wq_Exist_Param.close;
+      wq_Exist_Param.SQL[6] := 'AND o.NAME LIKE ' + quotedstr(Nom_procedure + '%');
+      wq_Exist_Param.open;
     except
       Application.HandleException(Self);
       Fin_Appli;
@@ -578,6 +600,25 @@ begin
       Param.DataType := ftInteger;
       Param.ParamType := ptInput;
       Param.Value := N_user;
+
+      if Param_Exist(SP_BEFORE.StoredProcName, '@P1') = True then
+      begin
+        Param := Params.Add;
+        Param.Name := '@P1';
+        Param.DataType := ftString;
+        Param.ParamType := ptInput;
+        Param.Value := P1_Procedure;
+
+      end;
+
+      if Param_Exist(SP_BEFORE.StoredProcName, '@P2') = True then
+      begin
+        Param := Params.Add;
+        Param.Name := '@P2';
+        Param.DataType := ftString;
+        Param.ParamType := ptInput;
+        Param.Value := P2_Procedure;
+      end;
 
     end;
 
@@ -665,7 +706,7 @@ begin
               0, // height
               SWP_NOSIZE + SWP_NOMOVE // window-positioning flags
                 );
-            //form1.Visible := False;
+            // form1.Visible := False;
 
             HandleGeneMail := 0;
             Param_Top_Most := 0;
@@ -706,9 +747,9 @@ begin
               Exit;
             end;
           finally
-            //Form1.Visible := True;
+            // Form1.Visible := True;
             SetWindowPos(HWND(Form1.Handle), // handle of window
-              HWND_TOPMOST or WS_EX_APPWINDOW , // placement-order handle
+              HWND_TOPMOST or WS_EX_APPWINDOW, // placement-order handle
               0, // horizontal position
               0, // vertical position
               0, // width
@@ -2982,13 +3023,22 @@ begin
             Param.ParamType := ptInput;
             Param.Value := Tab_Params[j];
           end;
+
+          if Param_Exist(SP_PRINT_BEFORE.StoredProcName, '@Choix_Before_Principal') = True then
+          begin
+            Param := Params.Add;
+            Param.Name := '@Choix_Before_Principal';
+            Param.DataType := ftInteger;
+            Param.ParamType := ptInput;
+            Param.Value := Choix_Entree;
+          end;
+
         end;
 
         try
           if (Procedure_Exist(Nom_procedure + '_PRINT_MAIL_BEFORE') = True) then
           begin
             SP_PRINT_BEFORE.open;
-
             if SP_PRINT_BEFORE.FindField('ID') <> nil then
             Begin
               Print_ID := SP_PRINT_BEFORE.FieldByName('ID').Asstring;
@@ -3095,6 +3145,15 @@ begin
           Param.DataType := ftString;
           Param.ParamType := ptInput;
           Param.Value := Print_ID;
+
+          if Param_Exist(SP_PRINT_BEFORE.StoredProcName, '@Choix_Before_Principal') = True then
+          begin
+            Param := Params.Add;
+            Param.Name := '@Choix_Before_Principal';
+            Param.DataType := ftInteger;
+            Param.ParamType := ptInput;
+            Param.Value := Choix_Entree;
+          end;
 
         end;
 
@@ -4655,7 +4714,7 @@ begin
   for i := 0 to ComponentCount - 1 do
     if (Components[i] is TDataSet) and ((Components[i] as TDataSet).Active = True) then (Components[i] as TDataSet)
       .close;
-  wq_session.Close;
+  wq_Session.close;
 
   Database.close;
 

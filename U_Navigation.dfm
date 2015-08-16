@@ -89,7 +89,7 @@ object F_Nav: TF_Nav
     Align = alClient
     InactiveFocusColor = 16773345
     Constraints.MinWidth = 50
-    Images = Form1.IconesListe
+    Images = Form1.IconeListePNG
     Indent = 19
     Options = [tvoExpandOnDblClk, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoHotTrack, tvoToolTips]
     Items.StreamVersion = 1
@@ -142,11 +142,6 @@ object F_Nav: TF_Nav
       ImageIndex = 227
       OnClick = RduireTout1Click
     end
-  end
-  object sp_Niveau2: TADOStoredProc
-    Parameters = <>
-    Left = 152
-    Top = 208
   end
   object sp_Niveau: TADStoredProc
     ConnectionName = 'db'

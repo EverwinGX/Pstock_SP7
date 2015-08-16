@@ -66,7 +66,7 @@ object F_Params: TF_Params
     EmptyParam = '?'
     EnableBlink = True
     HoverColor = clHighlight
-    Images = Form1.IconesListe
+    Images = Form1.IconeListePNG
     Multiline = False
     ParamHint = True
     ParamColor = clBlue
