@@ -118,6 +118,7 @@ type
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure AdvEdit1Change(Sender: TObject);
     function copier(Handle: HWND; Source, Cible: string): Integer;
+    function Deplacer(Handle: HWND; Source, Cible: string): Integer;
     procedure Transfert_Ico;
     procedure FormActivate(Sender: TObject);
     procedure Voir_Fiche(N_fiche: Integer; Fiche: Integer);
@@ -545,6 +546,8 @@ var
   Read_Excel_Rep_Indir: Boolean;
   Read_Excel_Rep_Fichier: string;
   Before_Principal: string;
+  Result_Deplacer: Integer;
+  Move: Integer;
 
 label
   Suite;
@@ -2091,8 +2094,8 @@ begin
           while not SP_EXCEL_READ_MOVE.Eof do
           begin
             Read_Excel_Log('', 'Deplacement du ficher', SP_EXCEL_READ_MOVE.FieldByName('Fichier_Source').AsAnsiString, SP_EXCEL_READ_MOVE.FieldByName('Fichier_Destination').AsAnsiString, N_user, Read_Excel_session);
-            Result_Move := MoveFileWithProgress(PChar(SP_EXCEL_READ_MOVE.FieldByName('Fichier_Source').AsAnsiString), PChar(SP_EXCEL_READ_MOVE.FieldByName('Fichier_Destination').AsAnsiString), MOVEFILE_COPY_ALLOWED + MOVEFILE_REPLACE_EXISTING);
-            Read_Excel_Log('', 'Résultat move', booltostr(Result_Move), '', N_user, Read_Excel_session);
+            Result_Deplacer := Deplacer(Form1.Handle, SP_EXCEL_READ_MOVE.FieldByName('Fichier_Source').AsAnsiString, SP_EXCEL_READ_MOVE.FieldByName('Fichier_Destination').AsAnsiString);
+            Read_Excel_Log('', 'Résultat move', inttostr(Result_Deplacer), '', N_user, Read_Excel_session);
             // if Integer(Result_Move) <> 0 then
             // begin
             // Read_Excel_Log('KO', 'Problème de déplacement', SP_EXCEL_READ_MOVE.fieldbyname('Fichier_Source').AsAnsiString, '', N_user, Read_Excel_session);
@@ -3269,6 +3272,15 @@ begin
         Param.ParamType := ptInput;
         Param.Value := Tab_Params[j];
       end;
+
+      if Param_Exist(SP.StoredProcName, '@Nav_Fiche') then
+      begin
+        Param := Params.Add;
+        Param.Name := '@Nav_Fiche';
+        Param.DataType := ftInteger;
+        Param.ParamType := ptInputOutput;
+      end;
+
     end;
 
     // Prépare la sp principal Memos
@@ -3391,6 +3403,7 @@ var
   Fexe: string;
   Lock: Integer;
   Param: TADParam;
+  Nav_Fiche: Integer;
 begin
   try
     try
@@ -3415,6 +3428,10 @@ begin
         // Récupération du paramètre @Plusieurs_Fiches
         Plusieurs_Fiches := SP.Params.ParamByName('@Plusieurs_Fiches').asinteger;
 
+        if Param_Exist(SP.StoredProcName, '@Nav_Fiche') then
+        begin
+          Nav_Fiche := SP.Params.ParamByName('@Nav_Fiche').asinteger;
+        end;
       finally
 
       end;
@@ -4058,6 +4075,12 @@ begin
         Param.Value := cle;
 
         Param := Params.Add;
+        Param.Name := '@Handle';
+        Param.DataType := ftInteger;
+        Param.ParamType := ptInput;
+        Param.Value := N_Handle;
+
+        Param := Params.Add;
         Param.Name := '@N_User';
         Param.DataType := ftInteger;
         Param.ParamType := ptInput;
@@ -4091,6 +4114,12 @@ begin
             Param.DataType := ftInteger;
             Param.ParamType := ptInput;
             Param.Value := cle;
+
+            Param := Params.Add;
+            Param.Name := '@Handle';
+            Param.DataType := ftInteger;
+            Param.ParamType := ptInput;
+            Param.Value := N_Handle;
 
             Param := Params.Add;
             Param.Name := '@N_User';
@@ -4159,6 +4188,8 @@ begin
             if HAndle_close <> 0 then
             begin
               SendMessage(HWND(HAndle_close), 3100, Lock, 0); // où Handle est le handle de la fenetre passé au MagicBtn par $HANDLE
+              postmessage(HWND(HAndle_close), 3100, Lock, 0); // où Handle est le handle de la fenetre passé au MagicBtn par $HANDLE
+
             end
             else
             begin
@@ -4170,6 +4201,8 @@ begin
               if (Handle_Fenetre > 0) then
               begin
                 SendMessage(HWND(Handle_Fenetre), 3100, Lock, 0); // où Handle est le handle de la fenetre passé au MagicBtn par $HANDLE
+                postmessage(HWND(HAndle_close), 3100, Lock, 0); // où Handle est le handle de la fenetre passé au MagicBtn par $HANDLE
+
               end;
             end;
             SP_LOCK.Next;
@@ -4257,6 +4290,21 @@ begin
           if N_Handle <> 0 then
             SendMessage(HWND(N_Handle), WM_G_RAFRAICHIR, 0, 0); // où Handle est le handle de la fenetre passé au MagicBtn par $HANDLE
 
+        end;
+
+        // Navigation
+        if (Nav_Fiche <> 0) then
+        begin
+          if N_Handle <> 0 then
+          begin
+            if Nav_Fiche > 0 then
+            begin
+              postmessage(HWND(N_Handle), 3152, 0, 0); // où Handle est le handle de la fenetre passé au MagicBtn par $HANDLE
+            end;
+            if Nav_Fiche < 0 then
+              postmessage(HWND(N_Handle), 3153, 0, 0); // où Handle est le handle de la fenetre passé au MagicBtn par $HANDLE
+
+          end;
         end;
 
         if (Ouverture_Fiche > 0) then
@@ -4851,6 +4899,49 @@ begin
       FlagsOptions := FlagsOptions + FOF_SIMPLEPROGRESS;
     end;
   end;
+
+  { -----préparation du paramètre lpFileOp ----- }
+  lpFileOp.Wnd := Handle;
+  lpFileOp.pFrom := TabFrom; // On aurait aussi put ecrire pFrom := @Chaine[1]
+  lpFileOp.fFlags := FlagsOptions;
+  { fin de la préparation du paramètre lpFileOp }
+  Resultat_copie := SHFileOperation(lpFileOp); // procède à la copie
+  if lpFileOp.fAnyOperationsAborted = True then
+  begin
+    Resultat_copie := -1;
+  end;
+
+  Result := Resultat_copie;
+end;
+
+function TForm1.Deplacer(Handle: HWND; Source, Cible: string): Integer;
+var
+  lpFileOp: TSHFileOpStructW;
+  TabFrom: array [0 .. 16383] of char;
+  i: Integer;
+  FlagsOptions: FILEOP_FLAGS;
+  Resultat_copie: Integer;
+begin
+  for i := 0 to length(Source) - 1 do
+    TabFrom[i] := Source[i + 1];
+  // pFrom peut contenir plusieurs noms de fichier.
+  // Les noms doivent être séparés par le caractère #0.
+  // d'après mes essais, le dernier nom de fichier doit être suivi
+  // de deux caractères #0.
+  TabFrom[length(Source)] := #0;
+  TabFrom[length(Source) + 1] := #0;
+  FlagsOptions := 0;
+
+  lpFileOp.wFunc := FO_MOVE;
+  lpFileOp.pTo := PwideChar(Cible);
+
+  FlagsOptions := FlagsOptions + FOF_ALLOWUNDO;
+
+  FlagsOptions := FlagsOptions + FOF_RENAMEONCOLLISION;
+
+  FlagsOptions := FlagsOptions + FOF_NOCONFIRMATION;
+
+  FlagsOptions := FlagsOptions + FOF_FILESONLY;
 
   { -----préparation du paramètre lpFileOp ----- }
   lpFileOp.Wnd := Handle;

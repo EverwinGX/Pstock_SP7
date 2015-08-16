@@ -82,3 +82,7 @@ SP7 Build 8
 SP7 Build 9
        Correction import excel : lecture repertoire avec Msg erreur
        Correction de deplacement de fichier en fin de procedure ?
+SP7 Build 10
+        Ajout d'un paramètres @Nav_Fiche optionnel dans la procédure principale -1 (fiche Pre) +1 (fiche suivante)
+        Correction pour la gestion du lock (mauvais passage du handle)
+
