@@ -1,3 +1,5 @@
+SP7 Build 15
+        Ajout du choix before pour l'export TXT
 SP7 Build 14
         Amélioration pour les connexions avec BDE en ALIAS
 SP7 Build 13
