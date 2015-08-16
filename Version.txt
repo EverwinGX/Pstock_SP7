@@ -68,3 +68,7 @@ SP7 Build 4
         Pour la lecture de fichiers excels on ouvre la possibilité d'inclure les sous dossiers
         Ajout d'une procedure pour lister les fichiers d'un repertoire : LISTE_FICHIERS
         Correction du message de retour en ainsistring
+SP7 Build 5
+        Correction pour l'enregistrement de fichier excel utilisation d'un format normal afin d'éviter les pertes des macros et autres...
+        Passage au firedac
+        Correction de la longueur des string de Param

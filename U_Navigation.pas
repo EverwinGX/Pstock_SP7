@@ -5,7 +5,8 @@ interface
 uses
     Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
     fcTreeView, Shader, StdCtrls, GradientLabel, ExtCtrls, Db, DBTables,
-    wwstorep, ComCtrls, SHELLAPI, Menus, AdvMenus, ADODB;
+    wwstorep, ComCtrls, SHELLAPI, Menus, AdvMenus, ADODB, uADStanIntf, uADStanOption, uADStanParam, uADStanError, uADDatSManager, uADPhysIntf, uADDAptIntf, uADStanAsync, uADDAptManager,
+  uADCompDataSet, uADCompClient;
 
 type
     TF_Nav = class(TForm)
@@ -21,7 +22,8 @@ type
     Popup_Niveau: TAdvPopupMenu;
     DvelopperTout1: TMenuItem;
     RduireTout1: TMenuItem;
-    sp_Niveau: TADOStoredProc;
+    sp_Niveau2: TADOStoredProc;
+    sp_Niveau: TADStoredProc;
         procedure MAJ_Arbre_Niveau;
         procedure Explore_Child(curNode: TfcTreeNode; N_Noeud: string);
         procedure tv_niveauMouseDown(TreeView: TfcCustomTreeView;

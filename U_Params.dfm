@@ -128,8 +128,8 @@ object F_Params: TF_Params
       'from'
       'MFPS_VUE_LST_DEPOT')
     ValidateWithMask = True
-    Left = 296
-    Top = 256
+    Left = 216
+    Top = 32
     object wq_custom0Liste1: TStringField
       DisplayWidth = 50
       FieldName = 'Liste1'
@@ -185,34 +185,219 @@ object F_Params: TF_Params
     Left = 350
     Top = 62
   end
-  object wsp_custom: TADOStoredProc
+  object wsp_custom2: TADOStoredProc
     Connection = Form1.Database
     Parameters = <>
     Left = 320
     Top = 200
   end
-  object wsp_Filtres: TADOStoredProc
+  object wsp_Filtres2: TADOStoredProc
     Connection = Form1.Database
     Parameters = <>
     Left = 384
     Top = 200
   end
-  object wsp_Update: TADOStoredProc
+  object wsp_Update2: TADOStoredProc
     Connection = Form1.Database
     Parameters = <>
     Left = 320
     Top = 152
   end
-  object wsp_File: TADOStoredProc
+  object wsp_File2: TADOStoredProc
     Connection = Form1.Database
     Parameters = <>
     Left = 384
     Top = 152
   end
-  object wq_custom: TADOQuery
+  object wq_custom2: TADOQuery
     Connection = Form1.Database
     Parameters = <>
-    Left = 208
-    Top = 248
+    Left = 272
+    Top = 32
+  end
+  object wsp_File: TADStoredProc
+    ConnectionName = 'db'
+    StoredProcName = 'EGX_SP_FCT_XML_LOG'
+    Left = 240
+    Top = 252
+    ParamData = <
+      item
+        Position = 1
+        Name = '@RETURN_VALUE'
+        DataType = ftInteger
+        ParamType = ptResult
+      end
+      item
+        Position = 2
+        Name = '@ID_Session'
+        DataType = ftString
+        ParamType = ptInput
+        Size = 100
+      end
+      item
+        Position = 3
+        Name = '@Num_Action'
+        DataType = ftInteger
+        ParamType = ptInput
+      end
+      item
+        Position = 4
+        Name = '@Message'
+        DataType = ftString
+        ParamType = ptInput
+        Size = 255
+      end
+      item
+        Position = 5
+        Name = '@Err_Traitement'
+        DataType = ftString
+        ParamType = ptInput
+        Size = 3
+      end>
+  end
+  object wsp_custom: TADStoredProc
+    ConnectionName = 'db'
+    StoredProcName = 'EGX_SP_FCT_XML_LOG'
+    Left = 296
+    Top = 252
+    ParamData = <
+      item
+        Position = 1
+        Name = '@RETURN_VALUE'
+        DataType = ftInteger
+        ParamType = ptResult
+      end
+      item
+        Position = 2
+        Name = '@ID_Session'
+        DataType = ftString
+        ParamType = ptInput
+        Size = 100
+      end
+      item
+        Position = 3
+        Name = '@Num_Action'
+        DataType = ftInteger
+        ParamType = ptInput
+      end
+      item
+        Position = 4
+        Name = '@Message'
+        DataType = ftString
+        ParamType = ptInput
+        Size = 255
+      end
+      item
+        Position = 5
+        Name = '@Err_Traitement'
+        DataType = ftString
+        ParamType = ptInput
+        Size = 3
+      end>
+  end
+  object wsp_Filtres: TADStoredProc
+    ConnectionName = 'db'
+    StoredProcName = 'EGX_SP_FCT_XML_LOG'
+    Left = 344
+    Top = 252
+    ParamData = <
+      item
+        Position = 1
+        Name = '@RETURN_VALUE'
+        DataType = ftInteger
+        ParamType = ptResult
+      end
+      item
+        Position = 2
+        Name = '@ID_Session'
+        DataType = ftString
+        ParamType = ptInput
+        Size = 100
+      end
+      item
+        Position = 3
+        Name = '@Num_Action'
+        DataType = ftInteger
+        ParamType = ptInput
+      end
+      item
+        Position = 4
+        Name = '@Message'
+        DataType = ftString
+        ParamType = ptInput
+        Size = 255
+      end
+      item
+        Position = 5
+        Name = '@Err_Traitement'
+        DataType = ftString
+        ParamType = ptInput
+        Size = 3
+      end>
+  end
+  object wsp_Update: TADStoredProc
+    ConnectionName = 'db'
+    StoredProcName = 'EGX_SP_FCT_XML_LOG'
+    Left = 192
+    Top = 252
+    ParamData = <
+      item
+        Position = 1
+        Name = '@RETURN_VALUE'
+        DataType = ftInteger
+        ParamType = ptResult
+      end
+      item
+        Position = 2
+        Name = '@ID_Session'
+        DataType = ftString
+        ParamType = ptInput
+        Size = 100
+      end
+      item
+        Position = 3
+        Name = '@Num_Action'
+        DataType = ftInteger
+        ParamType = ptInput
+      end
+      item
+        Position = 4
+        Name = '@Message'
+        DataType = ftString
+        ParamType = ptInput
+        Size = 255
+      end
+      item
+        Position = 5
+        Name = '@Err_Traitement'
+        DataType = ftString
+        ParamType = ptInput
+        Size = 3
+      end>
+  end
+  object wq_custom: TADQuery
+    CachedUpdates = True
+    Connection = Form1.Database
+    UpdateOptions.AssignedValues = [uvRefreshMode, uvCountUpdatedRecords]
+    UpdateOptions.RefreshMode = rmAll
+    UpdateOptions.CountUpdatedRecords = False
+    SQL.Strings = (
+      'SELECT TOP 100'
+      '   N_Import = T.N_Import'
+      '   ,Id_Session = T.Id_Session'
+      '   ,Date_Import = T.Date_Import'
+      '   ,N_Config = T.N_Config'
+      '   ,Code_Origine = T.Code_Origine'
+      '   ,Fichier = T.Fichier'
+      '   ,Repertoire = T.Repertoire'
+      '   ,Traite = T.Traite'
+      '   ,Date_Traitement = T.Date_Traitement'
+      '   ,Err_Traitement = T.Err_Traitement'
+      '   ,Err_Message = T.Err_Message'
+      '   ,Doc_Import = T.Doc_Import'
+      'FROM EGX_TB_FCT_XML_FICHIER_IMPORT T '
+      'order by Date_import desc')
+    Left = 152
+    Top = 188
   end
 end

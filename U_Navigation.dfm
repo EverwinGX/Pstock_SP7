@@ -143,9 +143,49 @@ object F_Nav: TF_Nav
       OnClick = RduireTout1Click
     end
   end
-  object sp_Niveau: TADOStoredProc
+  object sp_Niveau2: TADOStoredProc
     Parameters = <>
     Left = 152
     Top = 208
+  end
+  object sp_Niveau: TADStoredProc
+    ConnectionName = 'db'
+    StoredProcName = 'EGX_SP_FCT_XML_LOG'
+    Left = 136
+    Top = 60
+    ParamData = <
+      item
+        Position = 1
+        Name = '@RETURN_VALUE'
+        DataType = ftInteger
+        ParamType = ptResult
+      end
+      item
+        Position = 2
+        Name = '@ID_Session'
+        DataType = ftString
+        ParamType = ptInput
+        Size = 100
+      end
+      item
+        Position = 3
+        Name = '@Num_Action'
+        DataType = ftInteger
+        ParamType = ptInput
+      end
+      item
+        Position = 4
+        Name = '@Message'
+        DataType = ftString
+        ParamType = ptInput
+        Size = 255
+      end
+      item
+        Position = 5
+        Name = '@Err_Traitement'
+        DataType = ftString
+        ParamType = ptInput
+        Size = 3
+      end>
   end
 end

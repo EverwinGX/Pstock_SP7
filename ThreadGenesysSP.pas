@@ -3,7 +3,7 @@ unit ThreadGenesysSP;
 interface
 
 uses
-    Classes, stdctrls, comctrls, wwstorep, SysUtils, AdvEdit, wwriched, Wwquery, ADODB;
+    Classes, stdctrls, comctrls, wwstorep, SysUtils, AdvEdit, wwriched, Wwquery,uADCompClient ;
 
 type
     TThreadGenesysSP = class(TThread)
@@ -13,12 +13,12 @@ type
 
         LabelCommentaire: TadvEdit;
 
-        SP: TADOStoredProc;
-        SP_Memos: TADOStoredProc;
+        SP: TADStoredProc;
+        SP_Memos: TADStoredProc;
 
         Edit_S: TwwDBRichEdit;
         Edit_D: TwwDBRichEdit;
-        wq_Update: TADOQuery;
+        wq_Update: TADQuery;
         FException: Exception;
         procedure rafraichitLabels;
         procedure Concatene_Memos;
@@ -29,7 +29,7 @@ type
         procedure HandleException; virtual;
     public
         Stopped: Boolean;
-        constructor Create(L1: TadvEdit; I0: TADOStoredProc; I1: TADOStoredProc; M0: TwwDBRichEdit; M1: TwwDBRichEdit; Q0: TADOQuery);
+        constructor Create(L1: TadvEdit; I0: TADStoredProc; I1: TADStoredProc; M0: TwwDBRichEdit; M1: TwwDBRichEdit; Q0: TADQuery);
     end;
 
 implementation
@@ -51,7 +51,7 @@ implementation
 uses
     forms;
 
-constructor TThreadGenesysSP.Create(L1: TadvEdit; I0: TADOStoredProc; I1: TADOStoredProc; M0: TwwDBRichEdit; M1: TwwDBRichEdit; Q0: TADOQuery);
+constructor TThreadGenesysSP.Create(L1: TadvEdit; I0: TADStoredProc; I1: TADStoredProc; M0: TwwDBRichEdit; M1: TwwDBRichEdit; Q0: TADQuery);
 begin
     LabelCommentaire := L1;
     SP := I0;

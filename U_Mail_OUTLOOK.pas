@@ -4,14 +4,18 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  Db, DBTables, Wwquery, OleServer, Mapi, ComObj, Outlook_TLB, ADODB, OutlookXP;
+  Db, DBTables, Wwquery, OleServer, Mapi, ComObj, Outlook_TLB, ADODB, OutlookXP, uADStanIntf, uADStanOption, uADStanParam, uADStanError, uADDatSManager, uADPhysIntf, uADDAptIntf, uADStanAsync,
+  uADDAptManager, uADCompDataSet, uADCompClient;
 
 type
   TF_Mail_OUTLOOK = class(TForm)
-    wq_Outlook: TADOQuery;
-    wq_Outlook_dest: TADOQuery;
-    wq_Outlook_Fic: TADOQuery;
+    wq_Outlook2: TADOQuery;
+    wq_Outlook_dest2: TADOQuery;
+    wq_Outlook_Fic2: TADOQuery;
     OutlookApplication1: TOutlookApplication;
+    wq_Outlook: TADQuery;
+    wq_Outlook_dest: TADQuery;
+    wq_Outlook_Fic: TADQuery;
     procedure Send_Mail(Param_N_user: integer);
   private
     { Déclarations privées }
@@ -36,7 +40,7 @@ implementation
 procedure TF_Mail_OUTLOOK.Send_Mail(Param_N_user: integer);
 begin
   wq_Outlook.close;
-  wq_Outlook.Parameters.ParamByName('N_user').value := Param_N_user;
+  wq_Outlook.Params.ParamByName('N_user').asinteger := Param_N_user;
   wq_Outlook.Open;
   wq_Outlook.Last;
   wq_Outlook.First;
@@ -64,7 +68,7 @@ begin
       end;
 
       wq_Outlook_dest.close;
-      wq_Outlook_dest.Parameters.ParamByName('N_Mail').value := wq_Outlook.FieldByName
+      wq_Outlook_dest.Params.ParamByName('N_Mail').asinteger := wq_Outlook.FieldByName
         ('N_Mail').asinteger;
       wq_Outlook_dest.Open;
       wq_Outlook_dest.Last;
@@ -100,7 +104,7 @@ begin
       end;
 
       wq_Outlook_Fic.close;
-      wq_Outlook_Fic.Parameters.ParamByName('N_Mail').value := wq_Outlook.FieldByName
+      wq_Outlook_Fic.Params.ParamByName('N_Mail').asinteger := wq_Outlook.FieldByName
         ('N_Mail').asinteger;
       wq_Outlook_Fic.Open;
       wq_Outlook_Fic.Last;

@@ -7,7 +7,7 @@ uses
   StdCtrls, paramlabel, ExtCtrls, ParamListbox, Db, DBTables, wwstorep,
   ComCtrls, fcpanel, ToolWin, ImgList, Wwquery, wwdblook, FPwwDBLookupCombo,
   Math, ShellAPI, FPadvedit, AdvEdit, FPCheckListEdit,
-  ADODB;
+  ADODB, uADStanIntf, uADStanOption, uADStanParam, uADStanError, uADDatSManager, uADPhysIntf, uADDAptIntf, uADStanAsync, uADDAptManager, uADCompClient, uADCompDataSet;
 
 type
   TF_Params = class(TForm)
@@ -27,43 +27,40 @@ type
     Timer1: TTimer;
     OpenDlg: TOpenDialog;
     ColorDialog1: TColorDialog;
-    wsp_custom: TADOStoredProc;
-    wsp_Filtres: TADOStoredProc;
-    wsp_Update: TADOStoredProc;
-    wsp_File: TADOStoredProc;
-    wq_custom: TADOQuery;
+    wsp_custom2: TADOStoredProc;
+    wsp_Filtres2: TADOStoredProc;
+    wsp_Update2: TADOStoredProc;
+    wsp_File2: TADOStoredProc;
+    wq_custom2: TADOQuery;
+    wsp_File: TADStoredProc;
+    wsp_custom: TADStoredProc;
+    wsp_Filtres: TADStoredProc;
+    wsp_Update: TADStoredProc;
+    wq_custom: TADQuery;
     procedure Init;
     procedure Button1Click(Sender: TObject);
     procedure Close;
     procedure FormCreate(Sender: TObject);
-    procedure ToolBar4MouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure pnl_TitrefenetreMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
+    procedure ToolBar4MouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure pnl_TitrefenetreMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure CreateParams(var Params: TCreateParams); override;
     procedure FormActivate(Sender: TObject);
-    procedure AdvPanelFiltresParamCustomEdit(Sender: TObject; idx: Integer;
-      href, value, props: string; EditRect: TRect);
+    procedure AdvPanelFiltresParamCustomEdit(Sender: TObject; idx: Integer; href, value, props: string; EditRect: TRect);
     procedure CBO_Update(Sender: TObject; Param, Text: string);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormDestroy(Sender: TObject);
     procedure Get_Params(Etat: Integer);
-    procedure CBO_Notinlist(Sender: TObject; LookupTable: TDataSet;
-      NewValue: string; var Accept: Boolean);
+    procedure CBO_Notinlist(Sender: TObject; LookupTable: TDataSet; NewValue: string; var Accept: Boolean);
     procedure Voir_Fiche(N_fiche: Integer; Fiche: Integer);
-    procedure AdvPanelFiltresParamClick(Sender: TObject; idx: Integer;
-      href: string; var value: string);
-    procedure AdvPanelFiltresParamHint(Sender: TObject; idx: Integer;
-      href: string; var hintvalue: string; var showhint: Boolean);
+    procedure AdvPanelFiltresParamClick(Sender: TObject; idx: Integer; href: string; var value: string);
+    procedure AdvPanelFiltresParamHint(Sender: TObject; idx: Integer; href: string; var hintvalue: string; var showhint: Boolean);
     procedure Timer1Timer(Sender: TObject);
-    procedure AdvPanelFiltresMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
+    procedure AdvPanelFiltresMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure Button2Click(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormResize(Sender: TObject);
-    procedure AdvPanelFiltresParamEditDone(Sender: TObject; idx: Integer;
-      href: String; var value: String);
+    procedure AdvPanelFiltresParamEditDone(Sender: TObject; idx: Integer; href: String; var value: String);
 
   private
     Param_Actif: string;
@@ -92,7 +89,7 @@ uses MAIN, WM_GENESYS, U_Info;
 
 procedure TF_Params.Init;
 var
-  Param: tparameter;
+  Param: TADParam;
 begin
   // Init
   // Si on a un timer on l'active
@@ -103,8 +100,7 @@ begin
   end;
 
   AdvPanelFiltres.Items.Clear;
-  AdvPanelFiltres.ItemHeight := wsp_Filtres.FieldByName('Hauteur_Ligne')
-    .asinteger;
+  AdvPanelFiltres.ItemHeight := wsp_Filtres.FieldByName('Hauteur_Ligne').asinteger;
   HEight := wsp_Filtres.FieldByName('Height').asinteger;
   Width := wsp_Filtres.FieldByName('Width').asinteger;
   Caption := wsp_Filtres.FieldByName('Caption').asstring;
@@ -118,50 +114,53 @@ begin
 
   // Prépare la procédure d'update
   wsp_Update.Close;
-  wsp_Update.ProcedureName := Form1.Nom_Procedure + '_PARAMS_UPDATE';
+  wsp_Update.StoredProcName := Form1.Nom_Procedure + '_PARAMS_UPDATE';
   with wsp_Update do
   begin
-    Parameters.Clear;
-
-    Param := Parameters.AddParameter;
+    Params.Clear;
+    Param := Params.Add;
     Param.Name := '@RETURN_VALUE';
     Param.DataType := ftInteger;
-    Param.Direction := pdReturnValue;
+    Param.ParamType := ptResult;
 
-    Param := Parameters.AddParameter;
+    Param := Params.Add;
     Param.Name := '@cle';
     Param.DataType := ftInteger;
-    Param.Direction := pdInput;
+    Param.ParamType := ptInput;
 
-    Param := Parameters.AddParameter;
+    Param := Params.Add;
     Param.Name := '@N_User';
     Param.DataType := ftInteger;
-    Param.Direction := pdInput;
+    Param.ParamType := ptInput;
 
-    Param := Parameters.AddParameter;
+    Param := Params.Add;
     Param.Name := '@P1';
-    Param.DataType := ftWideString;
-    Param.Direction := pdInput;
+    Param.DataType := ftString;
+    Param.Size := 8000;
+    Param.ParamType := ptInput;
 
-    Param := Parameters.AddParameter;
+    Param := Params.Add;
     Param.Name := '@P2';
-    Param.DataType := ftWideString;
-    Param.Direction := pdInput;
+    Param.DataType := ftString;
+    Param.Size := 8000;
+    Param.ParamType := ptInput;
 
-    Param := Parameters.AddParameter;
+    Param := Params.Add;
     Param.Name := '@Nom_Param';
-    Param.DataType := ftWideString;
-    Param.Direction := pdInput;
+    Param.DataType := ftString;
+    Param.Size := 8000;
+    Param.ParamType := ptInput;
 
-    Param := Parameters.AddParameter;
+    Param := Params.Add;
     Param.Name := '@Val_Param';
-    Param.DataType := ftWideString;
-    Param.Direction := pdInput;
+    Param.DataType := ftString;
+    Param.Size := 8000;
+    Param.ParamType := ptInput;
 
-    Param := Parameters.AddParameter;
+    Param := Params.Add;
     Param.Name := '@Etat';
     Param.DataType := ftInteger;
-    Param.Direction := pdInput;
+    Param.ParamType := ptInput;
 
   end;
 
@@ -184,7 +183,7 @@ begin
   begin
     with Params do
     begin
-      // ExStyle := ExStyle or WS_EX_TOPMOST ;
+      // ExStyle := ExStyle ;
       WndParent := GetDesktopwindow;
     end;
   end;
@@ -228,16 +227,13 @@ begin
     if Copy(AdvPanelFiltres.ParamRefs[i], 1, 1) = '$' then
     begin
       try
-        wsp_Update.Parameters.ParamByName('@Cle').value := Form1.cle;
-        wsp_Update.Parameters.ParamByName('@N_user').value := Form1.N_user;
-        wsp_Update.Parameters.ParamByName('@P1').value := Form1.P1_Procedure;
-        wsp_Update.Parameters.ParamByName('@P2').value := Form1.P2_Procedure;
-        wsp_Update.Parameters.ParamByName('@Nom_Param').value :=
-          AdvPanelFiltres.ParamRefs[i];
-        wsp_Update.Parameters.ParamByName('@Val_Param').value :=
-          AdvPanelFiltres.Parameter
-          [AdvPanelFiltres.ParamRefs[i]];
-        wsp_Update.Parameters.ParamByName('@Etat').value := Etat;
+        wsp_Update.Params.ParamByName('@Cle').asinteger := Form1.cle;
+        wsp_Update.Params.ParamByName('@N_user').asinteger := Form1.N_user;
+        wsp_Update.Params.ParamByName('@P1').AsAnsiString := Form1.P1_Procedure;
+        wsp_Update.Params.ParamByName('@P2').AsAnsiString := Form1.P2_Procedure;
+        wsp_Update.Params.ParamByName('@Nom_Param').AsAnsiString := AdvPanelFiltres.ParamRefs[i];
+        wsp_Update.Params.ParamByName('@Val_Param').AsAnsiString := AdvPanelFiltres.Parameter[AdvPanelFiltres.ParamRefs[i]];
+        wsp_Update.Params.ParamByName('@Etat').asinteger := Etat;
         wsp_Update.ExecProc;
       except
         application.HandleException(self);
@@ -268,15 +264,13 @@ begin
 
 end;
 
-procedure TF_Params.ToolBar4MouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
+procedure TF_Params.ToolBar4MouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
   ReleaseCapture;
   F_Params.Perform(WM_SYSCOMMAND, $F012, 0);
 end;
 
-procedure TF_Params.pnl_TitrefenetreMouseDown(Sender: TObject;
-  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TF_Params.pnl_TitrefenetreMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
   ReleaseCapture;
   F_Params.Perform(WM_SYSCOMMAND, $F012, 0);
@@ -293,14 +287,14 @@ begin
   if (ApplicationHandle > 0) then
   begin
     ShowWindow(ApplicationHandle, SW_HIDE);
-    // ShowWindow( Handle, SW_SHOW );
+    // ShowWindow( self.Handle, SW_SHOW );
   end;
 
   Form1.Fenetre_Position(F_Params);
+
 end;
 
-procedure TF_Params.AdvPanelFiltresParamCustomEdit(Sender: TObject;
-  idx: Integer; href, value, props: string; EditRect: TRect);
+procedure TF_Params.AdvPanelFiltresParamCustomEdit(Sender: TObject; idx: Integer; href, value, props: string; EditRect: TRect);
 var
   Typ: string;
   Tmp_int: Integer;
@@ -315,7 +309,7 @@ var
   Chklist: FPTCheckListEdit;
   Precision: string;
   i: Integer;
-  Param: tparameter;
+  Param: TADParam;
 begin
   try
     Get_Params(1);
@@ -348,12 +342,9 @@ begin
         cbo.OnUpdate := CBO_Update;
         cbo.OnNotInList := CBO_Notinlist;
 
-        SetWindowLong(cbo.Handle, GWL_EXSTYLE,
-          GetWindowLong(cbo.Handle,
-            GWL_EXSTYLE) or WS_EX_TOOLWINDOW and not WS_EX_APPWINDOW);
+        SetWindowLong(cbo.Handle, GWL_EXSTYLE, GetWindowLong(cbo.Handle, GWL_EXSTYLE) or WS_EX_TOOLWINDOW and not WS_EX_APPWINDOW);
 
-        SETwindowPos(self.Handle, HWND_NOTOPMOST, 0, 0, 0, 0,
-          SWP_NOSIZE or SWP_NOMOVE);
+        SETwindowPos(self.Handle, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE or SWP_NOMOVE);
 
         if wq_custom.FieldByName('saisieLibre').asinteger = 0 then
         begin
@@ -361,15 +352,9 @@ begin
           cbo.Style := csDropDownList;
         end;
         cbo.AutoDropDown := True;
-        cbo.Selected.Add
-          ('Liste1	' + inttostr(strtointdef(wq_custom.FieldByName
-                ('Liste1Width').asstring, 20)) + '	Liste1	F');
-        cbo.Selected.Add
-          ('Liste2	' + inttostr(strtointdef(wq_custom.FieldByName
-                ('Liste2Width').asstring, 0)) + '	Liste1	F');
-        cbo.Selected.Add
-          ('Liste3	' + inttostr(strtointdef(wq_custom.FieldByName
-                ('Liste3Width').asstring, 0)) + '	Liste3	F');
+        cbo.Selected.Add('Liste1	' + inttostr(strtointdef(wq_custom.FieldByName('Liste1Width').asstring, 20)) + '	Liste1	F');
+        cbo.Selected.Add('Liste2	' + inttostr(strtointdef(wq_custom.FieldByName('Liste2Width').asstring, 0)) + '	Liste1	F');
+        cbo.Selected.Add('Liste3	' + inttostr(strtointdef(wq_custom.FieldByName('Liste3Width').asstring, 0)) + '	Liste3	F');
         cbo.Width := Max(121, EditRect.Right - EditRect.Left) + 24;
         cbo.Visible := True;
         cbo.SetFocus;
@@ -388,67 +373,71 @@ begin
       Tmp_String := props;
       Tmp_index_d := pos('[', Tmp_String);
       Tmp_index_F := pos(']', Tmp_String);
-      Nom_Procedure := Copy(Tmp_String, Tmp_index_d + 1,
-        Tmp_index_F - Tmp_index_d - 1);
+      Nom_Procedure := Copy(Tmp_String, Tmp_index_d + 1, Tmp_index_F - Tmp_index_d - 1);
       wsp_custom.Close;
-      wsp_custom.ProcedureName := Nom_Procedure;
+      wsp_custom.StoredProcName := Nom_Procedure;
       With wsp_custom do
       begin
-        Parameters.Clear;
+        Params.Clear;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@RETURN_VALUE';
         Param.DataType := ftInteger;
-        Param.Direction := pdReturnValue;
+        Param.ParamType := ptResult;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@cle';
         Param.DataType := ftInteger;
-        Param.Direction := pdInput;
+        Param.ParamType := ptInput;
         Param.value := Form1.cle;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@N_User';
         Param.DataType := ftInteger;
-        Param.Direction := pdInput;
+        Param.ParamType := ptInput;
         Param.value := Form1.N_user;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@P1';
-        Param.DataType := ftWideString;
-        Param.Direction := pdInput;
+        Param.DataType := ftString;
+        Param.Size := 8000;
+        Param.ParamType := ptInput;
         Param.value := Form1.P1_Procedure;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@P2';
-        Param.DataType := ftWideString;
-        Param.Direction := pdInput;
+        Param.DataType := ftString;
+        Param.Size := 8000;
+        Param.ParamType := ptInput;
         Param.value := Form1.P2_Procedure;
 
         for i := 0 to 8 do
         begin
-          Param := Parameters.AddParameter;
+          Param := Params.Add;
           Param.Name := '@Param' + inttostr(i);
-          Param.DataType := ftWideString;
-          Param.Direction := pdInput;
+          Param.DataType := ftString;
+          Param.Size := 8000;
+          Param.ParamType := ptInput;
           Param.value := Tab_Params[i];
         end;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@Nom_Param';
-        Param.DataType := ftWideString;
-        Param.Direction := pdInput;
+        Param.DataType := ftString;
+        Param.Size := 8000;
+        Param.ParamType := ptInput;
         Param.value := href;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@Val_Param';
-        Param.DataType := ftWideString;
-        Param.Direction := pdInput;
+        Param.DataType := ftString;
+        Param.Size := 100;
+        Param.ParamType := ptInput;
         Param.value := AdvPanelFiltres.Parameter[href];
       end;
 
       try
-        wsp_custom.open;
+      wsp_custom.open;
       except
       end;
 
@@ -465,12 +454,9 @@ begin
         cbo.OnUpdate := CBO_Update;
         cbo.OnNotInList := CBO_Notinlist;
 
-        SetWindowLong(cbo.Handle, GWL_EXSTYLE,
-          GetWindowLong(cbo.Handle,
-            GWL_EXSTYLE) or WS_EX_TOOLWINDOW and not WS_EX_APPWINDOW);
+        SetWindowLong(cbo.Handle, GWL_EXSTYLE, GetWindowLong(cbo.Handle, GWL_EXSTYLE) or WS_EX_TOOLWINDOW and not WS_EX_APPWINDOW);
 
-        SETwindowPos(self.Handle, HWND_NOTOPMOST, 0, 0, 0, 0,
-          SWP_NOSIZE or SWP_NOMOVE);
+        SETwindowPos(self.Handle, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE or SWP_NOMOVE);
 
         if wsp_custom.FieldByName('saisieLibre').asinteger = 0 then
         begin
@@ -478,15 +464,9 @@ begin
           cbo.Style := csDropDownList;
         end;
         cbo.AutoDropDown := True;
-        cbo.Selected.Add('Liste1	' + inttostr
-            (strtointdef(wsp_custom.FieldByName('Liste1Width').asstring, 20))
-            + '	Liste1	F');
-        cbo.Selected.Add('Liste2	' + inttostr
-            (strtointdef(wsp_custom.FieldByName('Liste2Width').asstring, 0))
-            + '	Liste1	F');
-        cbo.Selected.Add('Liste3	' + inttostr
-            (strtointdef(wsp_custom.FieldByName('Liste3Width').asstring, 0))
-            + '	Liste3	F');
+        cbo.Selected.Add('Liste1	' + inttostr(strtointdef(wsp_custom.FieldByName('Liste1Width').asstring, 20)) + '	Liste1	F');
+        cbo.Selected.Add('Liste2	' + inttostr(strtointdef(wsp_custom.FieldByName('Liste2Width').asstring, 0)) + '	Liste1	F');
+        cbo.Selected.Add('Liste3	' + inttostr(strtointdef(wsp_custom.FieldByName('Liste3Width').asstring, 0)) + '	Liste3	F');
         cbo.Width := Max(121, EditRect.Right - EditRect.Left) + 24;
         cbo.Visible := True;
         cbo.SetFocus;
@@ -505,62 +485,66 @@ begin
       Tmp_String := props;
       Tmp_index_d := pos('[', Tmp_String);
       Tmp_index_F := pos(']', Tmp_String);
-      Nom_Procedure := Copy(Tmp_String, Tmp_index_d + 1,
-        Tmp_index_F - Tmp_index_d - 1);
+      Nom_Procedure := Copy(Tmp_String, Tmp_index_d + 1, Tmp_index_F - Tmp_index_d - 1);
       wsp_File.Close;
-      wsp_File.ProcedureName := Nom_Procedure;
+      wsp_File.StoredProcName := Nom_Procedure;
       With wsp_File do
       begin
-        Parameters.Clear;
+        Params.Clear;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@RETURN_VALUE';
         Param.DataType := ftInteger;
-        Param.Direction := pdReturnValue;
+        Param.ParamType := ptResult;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@cle';
         Param.DataType := ftInteger;
-        Param.Direction := pdInput;
+        Param.ParamType := ptInput;
         Param.value := Form1.cle;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@N_User';
         Param.DataType := ftInteger;
-        Param.Direction := pdInput;
+        Param.ParamType := ptInput;
         Param.value := Form1.N_user;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@P1';
-        Param.DataType := ftWideString;
-        Param.Direction := pdInput;
+        Param.DataType := ftString;
+        Param.Size := 8000;
+        Param.ParamType := ptInput;
         Param.value := Form1.P1_Procedure;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@P2';
-        Param.DataType := ftWideString;
-        Param.Direction := pdInput;
+        Param.DataType := ftString;
+        Param.Size := 8000;
+        Param.ParamType := ptInput;
         Param.value := Form1.P2_Procedure;
 
         for i := 0 to 8 do
         begin
-          Param := Parameters.AddParameter;
+          Param := Params.Add;
           Param.Name := '@Param' + inttostr(i);
-          Param.DataType := ftWideString;
-          Param.Direction := pdInput;
+          Param.DataType := ftString;
+          Param.Size := 8000;
+          Param.ParamType := ptInput;
           Param.value := Tab_Params[i];
         end;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@Nom_Param';
-        Param.DataType := ftWideString;
-        Param.Direction := pdInput;
+        Param.DataType := ftString;
+        Param.Size := 8000;
+        Param.ParamType := ptInput;
         Param.value := href;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@Val_Param';
-        Param.DataType := ftWideString;
-        Param.Direction := pdInput;
+        Param.DataType := ftString;
+        Param.Size := 8000;
+        Param.ParamType := ptInput;
         Param.value := AdvPanelFiltres.Parameter[href];
       end;
 
@@ -612,7 +596,7 @@ begin
               0, // width
               0, // height
               SWP_NOSIZE + SWP_NOMOVE // window-positioning flags
-              );
+                );
 
           if OpenDlg.Execute = True then
           begin
@@ -622,8 +606,7 @@ begin
           begin
             if wsp_File.FieldByName('Value_On_Cancel').asstring <> '' then
             begin
-              AdvPanelFiltres.Parameter[href] := wsp_File.FieldByName
-                ('Value_On_Cancel').asstring;
+              AdvPanelFiltres.Parameter[href] := wsp_File.FieldByName('Value_On_Cancel').asstring;
             end
             else
             begin
@@ -639,7 +622,7 @@ begin
               0, // width
               0, // height
               SWP_NOSIZE + SWP_NOMOVE // window-positioning flags
-              );
+                );
           wsp_File.Close;
         end;
 
@@ -669,8 +652,7 @@ begin
       Tmp_String := props;
       Tmp_index_d := pos('[', Tmp_String);
       Tmp_index_F := pos(']', Tmp_String);
-      Precision := Copy(Tmp_String, Tmp_index_d + 1,
-        Tmp_index_F - Tmp_index_d - 1);
+      Precision := Copy(Tmp_String, Tmp_index_d + 1, Tmp_index_F - Tmp_index_d - 1);
 
       Money := FPTadvedit.Create(AdvPanelFiltres);
       Money.EditType := etmoney;
@@ -688,10 +670,7 @@ begin
       Money.SetFocus;
       if pos('?', value) = 0 then
       begin
-        Money.Text := floattostr
-          (strtofloat((stringreplace(stringreplace(stringreplace(value, #160,
-                    '', [rfReplaceAll, rfIgnoreCase]), ' ', '', [rfReplaceAll,
-                  rfIgnoreCase]), '.', ',', [rfReplaceAll, rfIgnoreCase]))));
+        Money.Text := floattostr(strtofloat((stringreplace(stringreplace(stringreplace(value, #160, '', [rfReplaceAll, rfIgnoreCase]), ' ', '', [rfReplaceAll, rfIgnoreCase]), '.', ',', [rfReplaceAll, rfIgnoreCase]))));
       end;
       Money.SelectAll;
     end;
@@ -702,62 +681,66 @@ begin
       Tmp_String := props;
       Tmp_index_d := pos('[', Tmp_String);
       Tmp_index_F := pos(']', Tmp_String);
-      Nom_Procedure := Copy(Tmp_String, Tmp_index_d + 1,
-        Tmp_index_F - Tmp_index_d - 1);
+      Nom_Procedure := Copy(Tmp_String, Tmp_index_d + 1, Tmp_index_F - Tmp_index_d - 1);
       wsp_custom.Close;
-      wsp_custom.ProcedureName := Nom_Procedure;
+      wsp_custom.StoredProcName := Nom_Procedure;
       With wsp_custom do
       begin
-        Parameters.Clear;
+        Params.Clear;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@RETURN_VALUE';
         Param.DataType := ftInteger;
-        Param.Direction := pdReturnValue;
+        Param.ParamType := ptResult;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@cle';
         Param.DataType := ftInteger;
-        Param.Direction := pdInput;
+        Param.ParamType := ptInput;
         Param.value := Form1.cle;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@N_User';
         Param.DataType := ftInteger;
-        Param.Direction := pdInput;
+        Param.ParamType := ptInput;
         Param.value := Form1.N_user;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@P1';
-        Param.DataType := ftWideString;
-        Param.Direction := pdInput;
+        Param.DataType := ftString;
+        Param.Size := 8000;
+        Param.ParamType := ptInput;
         Param.value := Form1.P1_Procedure;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@P2';
-        Param.DataType := ftWideString;
-        Param.Direction := pdInput;
+        Param.DataType := ftString;
+        Param.Size := 8000;
+        Param.ParamType := ptInput;
         Param.value := Form1.P2_Procedure;
 
         for i := 0 to 8 do
         begin
-          Param := Parameters.AddParameter;
+          Param := Params.Add;
           Param.Name := '@Param' + inttostr(i);
-          Param.DataType := ftWideString;
-          Param.Direction := pdInput;
+          Param.DataType := ftString;
+          Param.Size := 8000;
+          Param.ParamType := ptInput;
           Param.value := Tab_Params[i];
         end;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@Nom_Param';
-        Param.DataType := ftWideString;
-        Param.Direction := pdInput;
+        Param.DataType := ftString;
+        Param.Size := 8000;
+        Param.ParamType := ptInput;
         Param.value := href;
 
-        Param := Parameters.AddParameter;
+        Param := Params.Add;
         Param.Name := '@Val_Param';
-        Param.DataType := ftWideString;
-        Param.Direction := pdInput;
+        Param.DataType := ftString;
+        Param.Size := 8000;
+        Param.ParamType := ptInput;
         Param.value := AdvPanelFiltres.Parameter[href];
       end;
 
@@ -777,11 +760,9 @@ begin
         Chklist.OnUpdate := CBO_Update;
         Chklist.Width := Max(121, EditRect.Right - EditRect.Left) + 24;
         Chklist.Items.Clear;
-        Chklist.TextDelimiter := wsp_custom.FieldByName('TextDelimiter')
-          .asstring;
+        Chklist.TextDelimiter := wsp_custom.FieldByName('TextDelimiter').asstring;
         Chklist.TextEndChar := wsp_custom.FieldByName('TextEndChar').asstring;
-        Chklist.TextStartChar := wsp_custom.FieldByName('TextStarChar')
-          .asstring;
+        Chklist.TextStartChar := wsp_custom.FieldByName('TextStarChar').asstring;
 
         wsp_custom.First;
         while not wsp_custom.Eof do
@@ -807,17 +788,16 @@ end;
 
 procedure TF_Params.CBO_Update(Sender: TObject; Param, Text: string);
 begin
-  if text ='' then
+  if Text = '' then
   begin
-     text:='?'
+    Text := '?'
   end;
   AdvPanelFiltres.Parameter[Param] := Text;
   wq_custom.Close;
 
 end;
 
-procedure TF_Params.CBO_Notinlist(Sender: TObject; LookupTable: TDataSet;
-  NewValue: string; var Accept: Boolean);
+procedure TF_Params.CBO_Notinlist(Sender: TObject; LookupTable: TDataSet; NewValue: string; var Accept: Boolean);
 begin
   if wq_custom.FieldByName('SaisieLibre').asinteger = 0 then
     Accept := false;
@@ -858,8 +838,7 @@ begin
 
 end;
 
-procedure TF_Params.AdvPanelFiltresParamClick(Sender: TObject; idx: Integer;
-  href: string; var value: string);
+procedure TF_Params.AdvPanelFiltresParamClick(Sender: TObject; idx: Integer; href: string; var value: string);
 var
   Recup_handle: THandle;
   FExe, FParametres: string;
@@ -885,18 +864,15 @@ begin
   if (P > 0) then
   begin
     P_Act := pos('[', href);
-    TypeFiche := strtointdef(Copy(href, P + length('ouvrir_fiche_genesys_'),
-        3), 0);
+    TypeFiche := strtointdef(Copy(href, P + length('ouvrir_fiche_genesys_'), 3), 0);
     // Si l'action est après la commande ouverture
     if (P_Act > 0) and (P_Act > P) then
     begin
-      NFiche := strtointdef(Copy(href, P + length('ouvrir_fiche_genesys_') + 3,
-          (P_Act) - (P + length('ouvrir_fiche_genesys_') + 3)), 0);
+      NFiche := strtointdef(Copy(href, P + length('ouvrir_fiche_genesys_') + 3, (P_Act) - (P + length('ouvrir_fiche_genesys_') + 3)), 0);
     end
     else
     begin
-      NFiche := strtointdef(Copy(href, P + length('ouvrir_fiche_genesys_') + 3,
-          10), 0);
+      NFiche := strtointdef(Copy(href, P + length('ouvrir_fiche_genesys_') + 3, 10), 0);
     end;
 
     if (TypeFiche = 0) or (NFiche = 0) then
@@ -933,12 +909,10 @@ begin
     end;
 
     FParametres := stringreplace(FParametres, '<', '', []);
-    FParametres := stringreplace(FParametres, '$USER', inttostr(Form1.N_user),
-      []);
+    FParametres := stringreplace(FParametres, '$USER', inttostr(Form1.N_user), []);
     FParametres := stringreplace(FParametres, '$DB', Form1.Db, []);
     FParametres := stringreplace(FParametres, '$N', inttostr(Form1.cle), []);
-    FParametres := stringreplace(FParametres, '$HANDLE',
-      inttostr(Form1.n_handle), []);
+    FParametres := stringreplace(FParametres, '$HANDLE', inttostr(Form1.n_handle), []);
     FParametres := stringreplace(FParametres, '''', '"', [rfReplaceAll]);
 
     // Recherche d'une action potentiel
@@ -960,8 +934,7 @@ begin
       FExe := ExtractFileDir(ParamStr(0)) + '\' + FExe;
     end;
 
-    Recup_handle := ShellExecute(Handle, 'open', PChar(FExe),
-      PChar(FParametres), nil, SW_SHOWNORMAL);
+    Recup_handle := ShellExecute(Handle, 'open', PChar(FExe), PChar(FParametres), nil, SW_SHOWNORMAL);
 
   end;
 
@@ -1069,8 +1042,7 @@ begin
 
 end;
 
-procedure TF_Params.AdvPanelFiltresParamHint(Sender: TObject; idx: Integer;
-  href: string; var hintvalue: string; var showhint: Boolean);
+procedure TF_Params.AdvPanelFiltresParamHint(Sender: TObject; idx: Integer; href: string; var hintvalue: string; var showhint: Boolean);
 begin
   if (Copy(hintvalue, 1, 1) = '$') or (Copy(hintvalue, 1, 1) = '@') then
     showhint := false;
@@ -1081,8 +1053,7 @@ begin
   modalresult := Mrcancel;
 end;
 
-procedure TF_Params.AdvPanelFiltresMouseDown(Sender: TObject;
-  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TF_Params.AdvPanelFiltresMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
   if Timer1.Enabled = True then
   begin
@@ -1100,8 +1071,7 @@ begin
   Get_Params(2);
 end;
 
-procedure TF_Params.FormKeyDown(Sender: TObject; var Key: Word;
-  Shift: TShiftState);
+procedure TF_Params.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
   if (ssAlt in Shift) and (Info_actif = false) then
   begin
@@ -1113,8 +1083,7 @@ begin
   end;
 end;
 
-procedure TF_Params.FormKeyUp(Sender: TObject; var Key: Word;
-  Shift: TShiftState);
+procedure TF_Params.FormKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
   if (ssAlt in Shift) then
   begin
@@ -1137,12 +1106,11 @@ begin
 
 end;
 
-procedure TF_Params.AdvPanelFiltresParamEditDone(Sender: TObject; idx: Integer;
-  href: String; var value: String);
+procedure TF_Params.AdvPanelFiltresParamEditDone(Sender: TObject; idx: Integer; href: String; var value: String);
 begin
-  if value ='' then
+  if value = '' then
   begin
-    value:='?';
+    value := '?';
   end;
 
   AdvPanelFiltres.Parameter[href] := value;

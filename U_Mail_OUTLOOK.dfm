@@ -13,7 +13,7 @@ object F_Mail_OUTLOOK: TF_Mail_OUTLOOK
   OldCreateOrder = False
   PixelsPerInch = 96
   TextHeight = 13
-  object wq_Outlook: TADOQuery
+  object wq_Outlook2: TADOQuery
     Connection = Form1.Database
     Parameters = <
       item
@@ -33,7 +33,7 @@ object F_Mail_OUTLOOK: TF_Mail_OUTLOOK
     Left = 48
     Top = 120
   end
-  object wq_Outlook_dest: TADOQuery
+  object wq_Outlook_dest2: TADOQuery
     Connection = Form1.Database
     Parameters = <
       item
@@ -53,7 +53,7 @@ object F_Mail_OUTLOOK: TF_Mail_OUTLOOK
     Left = 104
     Top = 120
   end
-  object wq_Outlook_Fic: TADOQuery
+  object wq_Outlook_Fic2: TADOQuery
     Connection = Form1.Database
     Parameters = <
       item
@@ -79,5 +79,65 @@ object F_Mail_OUTLOOK: TF_Mail_OUTLOOK
     AutoQuit = False
     Left = 328
     Top = 184
+  end
+  object wq_Outlook: TADQuery
+    CachedUpdates = True
+    Connection = Form1.Database
+    UpdateOptions.AssignedValues = [uvRefreshMode, uvCountUpdatedRecords]
+    UpdateOptions.RefreshMode = rmAll
+    UpdateOptions.CountUpdatedRecords = False
+    SQL.Strings = (
+      'SELECT'
+      '*'
+      'FROM EGXS_TB_MAIL_OUTLOOK T '
+      'WHERE T.N_User = :N_User AND ISNULL(Envoye,'#39'Non'#39')='#39'Non'#39
+      'ORDER BY T.Ordre')
+    Left = 48
+    Top = 68
+    ParamData = <
+      item
+        Name = 'N_USER'
+        ParamType = ptInput
+      end>
+  end
+  object wq_Outlook_dest: TADQuery
+    CachedUpdates = True
+    Connection = Form1.Database
+    UpdateOptions.AssignedValues = [uvRefreshMode, uvCountUpdatedRecords]
+    UpdateOptions.RefreshMode = rmAll
+    UpdateOptions.CountUpdatedRecords = False
+    SQL.Strings = (
+      'SELECT'
+      '*'
+      'FROM EGXS_TB_MAIL_OUTLOOK_DESTINATAIRES T '
+      'WHERE T.N_Mail = :N_mail'
+      'ORDER BY T.Ordre')
+    Left = 104
+    Top = 68
+    ParamData = <
+      item
+        Name = 'N_MAIL'
+        ParamType = ptInput
+      end>
+  end
+  object wq_Outlook_Fic: TADQuery
+    CachedUpdates = True
+    Connection = Form1.Database
+    UpdateOptions.AssignedValues = [uvRefreshMode, uvCountUpdatedRecords]
+    UpdateOptions.RefreshMode = rmAll
+    UpdateOptions.CountUpdatedRecords = False
+    SQL.Strings = (
+      'SELECT'
+      '*'
+      'FROM EGXS_TB_MAIL_OUTLOOK_FICHIER_ATTACHE T '
+      'WHERE T.N_Mail = :N_mail'
+      'ORDER BY T.Ordre')
+    Left = 152
+    Top = 68
+    ParamData = <
+      item
+        Name = 'N_MAIL'
+        ParamType = ptInput
+      end>
   end
 end
