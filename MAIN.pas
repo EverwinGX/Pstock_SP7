@@ -258,6 +258,7 @@ begin
     E.Message := mess1;
   end;
   AdvPicture1.Animate := False;
+  IsQuitter:=true;
   Application.MessageBox(PChar(E.message), 'Erreur', MB_OK + MB_ICONERROR + MB_TOPMOST);
 end;
 
@@ -519,10 +520,11 @@ var
   Print_ID:string;
 label Suite;
 begin
-  if encours = True then
+  if (encours = True) or (isquitter =true) then
     exit;
 
   encours := True;
+
 
   try
     Application.ProcessMessages;

@@ -56,5 +56,6 @@ SP7 Build 0
     Passage unicode
     Passage en ADO : attention nécessité d'avoir GX_ODBC.ini paramétré
     Ajout d'une nouvelle gestion de PRINT avec de nouveaux paramètres ID entre _PRINT et _PRINT_BEFORE
-
+ SP7 Build 1
+   Correction sur fenêtre Param
 
