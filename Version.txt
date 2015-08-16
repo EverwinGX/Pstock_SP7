@@ -1,0 +1,60 @@
+Taille du main: 68 * 240
+
+SP4 build 2
+    Ajout de la gestion des procédures SELECT_FILE et OPEN_APPLI
+SP4 build 3
+    Ajout de la gestion des procédures COPY_FILE
+SP4 build 4
+    Améliore COPY_FILE en ajoutant des paramètres
+    Ajout de la gestion des procédures COPY_FILE_AFTER
+SP6
+    Ajout des parametres + modification des SP
+    Ajout de la gestion des concaténations de rtf sans perdre la mise en forme MEMOS
+SP6 Build 1
+    Ajout de la gestion des procédures CREATE_DIR
+    Ajout du champ directory_only dans SELECT_FILE
+    Ajout de fonctionnalités à Params
+    Test d'existence des procédures: évite les erreurs silencieuses
+SP6 Build 2
+    Ajout de laprocedure PARAMS_AFTER
+SP6 Build 3
+    params: Modification du hint: ne s'affiche pas si il commence par $ ou @
+    params: Gestion des actions OK et CANCEL sur overture fiche et pstocke
+SP6 Build 4
+    Ajout de la procedure OUTLOOK
+    Ajout de la procedure PRINT
+SP6 Build 5
+    Ajout d'un champ tempo pour l'ouverture des fiches (SP_LISTE_FICHES)
+SP6 Build 6
+    Ajout de la procedure TXT
+    Gestion de la position de la fenetre
+SP6 Build 6.1
+    Ajout de la fonctin alt pour taille de la fenetre param
+SP6 Build 6.2
+    Correction d'un bug si la procédure params ne retourne pas d'enregistrement (annulation de l'opérateur)
+SP6 Build 7
+    Ajout de la procedure EXCEL
+    Gestion wu WM_Message via la vue vue_todo_type_fiche
+    Traitement de la procédure LOCK
+    Traitement de la procédure NAV
+SP6 Build 8
+    Sur la fenetre param et open appli : si l'appli à lancer n'a pas de chemin alors reprise du chemin de l'exe
+SP6 Build 9
+    Gestion de la connexion sécurisé
+SP6 Build 10
+    Correction su la fene^tre Params, pour valider la saisie sur la sortie du href
+SP6 Build 11
+    Correction sur la gestion des listes déroulantes qui apparaissent derrière
+SP6 Build 12
+
+SP6 Build 13
+    Ajout de la gestion du Fichier_dest dans la SP EXCEL
+    Ajout de la gestion de la mise en forme dans la SP EXCEL
+    Ajout de la gestion de lecture depuis Excel
+
+SP7 Build 0
+    Passage unicode
+    Passage en ADO : attention nécessité d'avoir GX_ODBC.ini paramétré
+    Ajout d'une nouvelle gestion de PRINT avec de nouveaux paramètres ID entre _PRINT et _PRINT_BEFORE
+
+

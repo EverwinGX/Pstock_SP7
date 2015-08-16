@@ -21,6 +21,28 @@
 # Uncomment this if it is not mobile development and you do not use remote debug feature.
 #*.deployproj
 #
+# Archive
+*.rar
+*.zip
+
+#SVN
+.svn/
+__history/
+
+#Repertoires
+ModelSupport_EGX_SP7/
+01_SQL/
+02_EXE/
+03_Documentation/
+
+#BDE
+*.MB
+
+#Raccourci
+*.lnk
+
+#bak
+*.bak
 
 # Delphi compiler-generated binaries (safe to delete)
 *.exe

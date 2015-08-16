@@ -1,0 +1,54 @@
+unit WM_GENESYS;
+
+
+interface
+
+Uses Messages;
+
+const
+
+WM_G_RAFRAICHIR = WM_USER + 1;
+
+//attention on prend une constante largement au delà de WM_USER pour éviter le télescopage des
+//messages utilisés par d'autres applis. On ne touche pas à WM_G_RAFRAICHIR car cette commande
+//est déjà diffusée...
+WM_G_GENESYS = WM_USER + 1000;
+
+WM_G_OPEN_CLIENT   = WM_G_GENESYS + 0;
+WM_G_OPEN_CONTACT  = WM_G_GENESYS + 1;
+WM_G_OPEN_PROJET   = WM_G_GENESYS + 2;
+WM_G_OPEN_BL       = WM_G_GENESYS + 3;
+WM_G_OPEN_CDE_CLI  = WM_G_GENESYS + 4;
+WM_G_OPEN_FACT_CLI = WM_G_GENESYS + 5;
+WM_G_OPEN_FOURNISS = WM_G_GENESYS + 6;
+WM_G_OPEN_CONTFN   = WM_G_GENESYS + 7;
+WM_G_OPEN_ORDREF   = WM_G_GENESYS + 8;
+WM_G_OPEN_RF       = WM_G_GENESYS + 9;
+WM_G_OPEN_STOCK    = WM_G_GENESYS + 10;
+WM_G_OPEN_BR       = WM_G_GENESYS + 11;
+WM_G_OPEN_CDE_FOUR = WM_G_GENESYS + 12;
+WM_G_OPEN_FAC_FOUR = WM_G_GENESYS + 13;
+WM_G_OPEN_TRESO    = WM_G_GENESYS + 14;
+WM_G_OPEN_ITC      = WM_G_GENESYS + 15;
+
+WM_G_OPEN_FCT_BASE = WM_G_GENESYS + 17;
+WM_G_OPEN_PRODUIT  = WM_G_GENESYS + 18;
+WM_G_OPEN_STAT     = WM_G_GENESYS + 19;
+WM_G_OPEN_AFFAIRE  = WM_G_GENESYS + 20;
+WM_G_OPEN_COMPTA   = WM_G_GENESYS + 21;
+WM_G_OPEN_INVENTAIRE = WM_G_GENESYS + 22;
+WM_G_OPEN_DEVIS      = WM_G_GENESYS + 23;
+WM_G_OPEN_ABONNEMENT = WM_G_GENESYS + 24;
+WM_G_OPEN_PLANNING = WM_G_GENESYS + 25;
+WM_G_OPEN_TODO = WM_G_GENESYS + 26;
+WM_G_OPEN_DEMANDE_ACHAT = WM_G_GENESYS + 27;
+WM_G_OPEN_CAMPAGNE = WM_G_GENESYS + 28;
+WM_G_OPEN_GENEMAIL = WM_G_GENESYS + 29;
+
+
+//   SendMessage( Handle, WM_G_RAFRAICHIR, 0, 0 ); où Handle est le handle de la fenetre passé au MagicBtn par $HANDLE
+
+implementation
+
+end.
+ 
