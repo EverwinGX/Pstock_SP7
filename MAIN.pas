@@ -258,7 +258,7 @@ begin
     E.Message := mess1;
   end;
   AdvPicture1.Animate := False;
-  IsQuitter:=true;
+  IsQuitter := True;
   Application.MessageBox(PChar(E.message), 'Erreur', MB_OK + MB_ICONERROR + MB_TOPMOST);
 end;
 
@@ -400,7 +400,7 @@ begin
       QueryGetUser.Parameters.ParamByName('N_user').Value := N_user;
       QueryGetUser.Open;
       User := lowercase(QueryGetUser.fieldbyname('Login').AsAnsiString);
-      //QueryGetUser.close;
+      // QueryGetUser.close;
       Nom_Fenetre_Genesys := 'GENESYS - ' + Nom_Societe + ' - ' + User;
       Handle_Genesys := findwindow(nil, PChar(Nom_Fenetre_Genesys));
       if Handle_Genesys = 0 then
@@ -517,14 +517,13 @@ var
   Read_Excel_Vide: string;
   Result_Move: longbool;
   Param: Tparameter;
-  Print_ID:string;
+  Print_ID: string;
 label Suite;
 begin
-  if (encours = True) or (isquitter =true) then
+  if (encours = True) or (IsQuitter = True) then
     exit;
 
   encours := True;
-
 
   try
     Application.ProcessMessages;
@@ -581,8 +580,7 @@ begin
         if (SP_BEFORE.fieldbyname('Msg').Asstring <> '') then
         begin
           Choix_Entree := Application.MessageBox(PChar(SP_BEFORE.fieldbyname('Msg').Asstring),
-            PChar(SP_BEFORE.fieldbyname('Caption').AsString),
-            SP_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+            PChar(SP_BEFORE.fieldbyname('Caption').Asstring), SP_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
         end;
         if (SP_BEFORE.fieldbyname('Result').Asinteger <> 1) then
         begin
@@ -779,7 +777,7 @@ begin
         if (SP_PARAM_AFTER.fieldbyname('Msg').Asstring <> '') then
         begin
           Choix_Entree := Application.MessageBox(PChar(SP_PARAM_AFTER.fieldbyname('Msg').Asstring),
-            PChar(SP_PARAM_AFTER.fieldbyname('Caption').AsString),
+            PChar(SP_PARAM_AFTER.fieldbyname('Caption').Asstring),
             SP_PARAM_AFTER.fieldbyname('Flags').Asinteger + MB_TOPMOST);
         end;
         if (SP_PARAM_AFTER.fieldbyname('Result').Asinteger <> 1) then
@@ -1018,7 +1016,7 @@ begin
         if (SP_COPY_FILE_BEFORE.fieldbyname('Msg').Asstring <> '') then
         begin
           choix := Application.MessageBox(PChar(SP_COPY_FILE_BEFORE.fieldbyname('Msg').Asstring),
-            PChar(SP_COPY_FILE_BEFORE.fieldbyname('Caption').AsString),
+            PChar(SP_COPY_FILE_BEFORE.fieldbyname('Caption').Asstring),
             SP_COPY_FILE_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
         end;
 
@@ -1441,7 +1439,14 @@ begin
         Param.Name := '@P2';
         Param.DataType := ftWideString;
         Param.Direction := pdInput;
-        Param.Value := P2_Procedure;
+        if Chemin_Fic <> '' then
+        begin
+          Param.Value := Chemin_Fic;
+        end
+        else
+        begin
+          Param.Value := P2_Procedure;
+        end;
 
         Param := Parameters.AddParameter;
         Param.Name := '@Choix_Before';
@@ -1501,7 +1506,14 @@ begin
             Param.Name := '@P2';
             Param.DataType := ftWideString;
             Param.Direction := pdInput;
-            Param.Value := P2_Procedure;
+            if Chemin_Fic <> '' then
+            begin
+              Param.Value := Chemin_Fic;
+            end
+            else
+            begin
+              Param.Value := P2_Procedure;
+            end;
 
             for j := 0 to 8 do
             begin
@@ -1570,7 +1582,14 @@ begin
           Param.Name := '@P2';
           Param.DataType := ftWideString;
           Param.Direction := pdInput;
-          Param.Value := P2_Procedure;
+          if Chemin_Fic <> '' then
+          begin
+            Param.Value := Chemin_Fic;
+          end
+          else
+          begin
+            Param.Value := P2_Procedure;
+          end;
 
           for j := 0 to 8 do
           begin
@@ -1718,7 +1737,7 @@ begin
                 for i := int_col to int_col_end do
                 begin
                   try
-                    Read_Excel_Valeur := Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[j, i].Formula;
+                    Read_Excel_Valeur := Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[j, i].value;
 
                     wq_EXCEL_READ_TAB.fieldbyname('Col_' + inttostr(i)).AsAnsiString := Read_Excel_Valeur;
 
@@ -1729,7 +1748,7 @@ begin
                 end;
                 wq_EXCEL_READ_TAB.post;
 
-                Read_Excel_Vide := Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[j, Col_Cpt_vide].Formula;
+                Read_Excel_Vide := Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[j, Col_Cpt_vide].value;
 
                 if Read_Excel_Vide = '' then
                 begin
@@ -1766,7 +1785,7 @@ begin
                 for j := int_Line to int_line_End do
                 begin
                   try
-                    Read_Excel_Valeur := Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[j, i].Formula;
+                    Read_Excel_Valeur := Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[j, i].value;
 
                     wq_EXCEL_READ_VAL.Append;
                     wq_EXCEL_READ_VAL.fieldbyname('N_user').Asinteger := N_user;
@@ -1857,7 +1876,14 @@ begin
             Param.Name := '@P2';
             Param.DataType := ftWideString;
             Param.Direction := pdInput;
-            Param.Value := P2_Procedure;
+            if Chemin_Fic <> '' then
+            begin
+              Param.Value := Chemin_Fic;
+            end
+            else
+            begin
+              Param.Value := P2_Procedure;
+            end;
 
             for j := 0 to 8 do
             begin
@@ -1929,7 +1955,14 @@ begin
             Param.Name := '@P2';
             Param.DataType := ftWideString;
             Param.Direction := pdInput;
-            Param.Value := P2_Procedure;
+            if Chemin_Fic <> '' then
+            begin
+              Param.Value := Chemin_Fic;
+            end
+            else
+            begin
+              Param.Value := P2_Procedure;
+            end;
 
             for j := 0 to 8 do
             begin
@@ -1998,7 +2031,7 @@ begin
             if (SP_EXCEL_BEFORE.fieldbyname('Msg').Asstring <> '') then
             begin
               choix := Application.MessageBox(PChar(SP_EXCEL_BEFORE.fieldbyname('Msg').Asstring),
-                PChar(SP_EXCEL_BEFORE.fieldbyname('Caption').AsString),
+                PChar(SP_EXCEL_BEFORE.fieldbyname('Caption').Asstring),
                 SP_EXCEL_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
 
               if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
@@ -2441,7 +2474,7 @@ begin
             if (SP_OUTLOOK_BEFORE.fieldbyname('Msg').Asstring <> '') then
             begin
               choix := Application.MessageBox(PChar(SP_OUTLOOK_BEFORE.fieldbyname('Msg').Asstring),
-                PChar(SP_OUTLOOK_BEFORE.fieldbyname('Caption').AsString),
+                PChar(SP_OUTLOOK_BEFORE.fieldbyname('Caption').Asstring),
                 SP_OUTLOOK_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
 
               if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
@@ -2578,7 +2611,7 @@ begin
             if (SP_OUTLOOK_AFTER.fieldbyname('Msg').Asstring <> '') then
             begin
               choix := Application.MessageBox(PChar(SP_OUTLOOK_AFTER.fieldbyname('Msg').Asstring),
-                PChar(SP_OUTLOOK_AFTER.fieldbyname('Caption').AsString),
+                PChar(SP_OUTLOOK_AFTER.fieldbyname('Caption').Asstring),
                 SP_OUTLOOK_AFTER.fieldbyname('Flags').Asinteger + MB_TOPMOST);
 
               if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
@@ -2662,7 +2695,7 @@ begin
             if (SP_PRINT_BEFORE.fieldbyname('Msg').Asstring <> '') then
             begin
               choix := Application.MessageBox(PChar(SP_PRINT_BEFORE.fieldbyname('Msg').Asstring),
-                PChar(SP_PRINT_BEFORE.fieldbyname('Caption').AsString),
+                PChar(SP_PRINT_BEFORE.fieldbyname('Caption').Asstring),
                 SP_PRINT_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
 
               if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
@@ -2774,193 +2807,193 @@ begin
       exit;
     end;
 
-    //Gestion des impressions nouvelle méthode
-        try
-            if (Procedure_exist(nom_procedure + '_PRINT_MAIL') = True) then
-            begin
+    // Gestion des impressions nouvelle méthode
+    try
+      if (Procedure_Exist(Nom_procedure + '_PRINT_MAIL') = True) then
+      begin
 
-              SP_PRINT_BEFORE.ProcedureName := Nom_procedure + '_PRINT_MAIL_BEFORE';
-              With SP_PRINT_BEFORE do
-              begin
-                Parameters.Clear;
+        SP_PRINT_BEFORE.ProcedureName := Nom_procedure + '_PRINT_MAIL_BEFORE';
+        With SP_PRINT_BEFORE do
+        begin
+          Parameters.Clear;
 
-                Param := Parameters.AddParameter;
-                Param.Name := '@RETURN_VALUE';
-                Param.DataType := ftInteger;
-                Param.Direction := pdReturnValue;
+          Param := Parameters.AddParameter;
+          Param.Name := '@RETURN_VALUE';
+          Param.DataType := ftInteger;
+          Param.Direction := pdReturnValue;
 
-                Param := Parameters.AddParameter;
-                Param.Name := '@cle';
-                Param.DataType := ftInteger;
-                Param.Direction := pdInput;
-                Param.Value := cle;
+          Param := Parameters.AddParameter;
+          Param.Name := '@cle';
+          Param.DataType := ftInteger;
+          Param.Direction := pdInput;
+          Param.Value := cle;
 
-                Param := Parameters.AddParameter;
-                Param.Name := '@N_User';
-                Param.DataType := ftInteger;
-                Param.Direction := pdInput;
-                Param.Value := N_user;
+          Param := Parameters.AddParameter;
+          Param.Name := '@N_User';
+          Param.DataType := ftInteger;
+          Param.Direction := pdInput;
+          Param.Value := N_user;
 
-                Param := Parameters.AddParameter;
-                Param.Name := '@P1';
-                Param.DataType := ftWideString;
-                Param.Direction := pdInput;
-                Param.Value := P1_Procedure;
+          Param := Parameters.AddParameter;
+          Param.Name := '@P1';
+          Param.DataType := ftWideString;
+          Param.Direction := pdInput;
+          Param.Value := P1_Procedure;
 
-                Param := Parameters.AddParameter;
-                Param.Name := '@P2';
-                Param.DataType := ftWideString;
-                Param.Direction := pdInput;
-                if Chemin_Fic <> '' then
-                begin
-                  Param.Value := Chemin_Fic;
-                end
-                else
-                begin
-                  Param.Value := P2_Procedure;
-                end;
+          Param := Parameters.AddParameter;
+          Param.Name := '@P2';
+          Param.DataType := ftWideString;
+          Param.Direction := pdInput;
+          if Chemin_Fic <> '' then
+          begin
+            Param.Value := Chemin_Fic;
+          end
+          else
+          begin
+            Param.Value := P2_Procedure;
+          end;
 
-                for j := 0 to 8 do
-                begin
-                  Param := Parameters.AddParameter;
-                  Param.Name := '@Param' + inttostr(j);
-                  Param.DataType := ftWideString;
-                  Param.Direction := pdInput;
-                  Param.Value := Tab_Params[j];
-                end;
-              end;
-
-
-                try
-                    if (Procedure_exist(nom_procedure + '_PRINT_MAIL_BEFORE') = True) then
-                    begin
-                        SP_PRINT_BEFORE.Open;
-
-                        if SP_PRINT_BEFORE.FindField('ID')<>nil then
-                        Begin
-                            Print_ID:=  SP_PRINT_BEFORE.FieldByName('ID').asstring;
-                        End;
-
-                        if (SP_PRINT_BEFORE.FieldByName('Msg').AsString <> '') then
-                        begin
-                            choix := Application.Messagebox(PChar(SP_PRINT_BEFORE.FieldByName('Msg').AsString), PChar(SP_PRINT_BEFORE.FieldByName('Caption').AsAnsiString), SP_PRINT_BEFORE.FieldByName('Flags').asInteger + MB_TOPMOST);
-
-                            if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
-                            begin
-                                SP_PRINT_BEFORE.Close;
-                                Fin_Appli;
-                                exit;
-                            end;
-                        end;
-
-                        if (SP_PRINT_BEFORE.FieldByName('Result').asInteger <> 1) then
-                        begin
-                            SP_PRINT_BEFORE.Close;
-                            Fin_Appli;
-                            exit;
-                        end;
-
-                        SP_PRINT_BEFORE.Close;
-                    end;
-                except
-                    Application.HandleException(Self);
-                    SP_PRINT_BEFORE.Close;
-                    Fin_Appli;
-                    exit;
-                end;
-
-                SP_PRINT.ProcedureName := Nom_procedure + '_PRINT_MAIL';
-                With SP_PRINT do
-                begin
-                  Parameters.Clear;
-
-                  Param := Parameters.AddParameter;
-                  Param.Name := '@RETURN_VALUE';
-                  Param.DataType := ftInteger;
-                  Param.Direction := pdReturnValue;
-
-                  Param := Parameters.AddParameter;
-                  Param.Name := '@cle';
-                  Param.DataType := ftInteger;
-                  Param.Direction := pdInput;
-                  Param.Value := cle;
-
-                  Param := Parameters.AddParameter;
-                  Param.Name := '@N_User';
-                  Param.DataType := ftInteger;
-                  Param.Direction := pdInput;
-                  Param.Value := N_user;
-
-                  Param := Parameters.AddParameter;
-                  Param.Name := '@P1';
-                  Param.DataType := ftWideString;
-                  Param.Direction := pdInput;
-                  Param.Value := P1_Procedure;
-
-                  Param := Parameters.AddParameter;
-                  Param.Name := '@P2';
-                  Param.DataType := ftWideString;
-                  Param.Direction := pdInput;
-                  if Chemin_Fic <> '' then
-                  begin
-                    Param.Value := Chemin_Fic;
-                  end
-                  else
-                  begin
-                    Param.Value := P2_Procedure;
-                  end;
-
-                  Param := Parameters.AddParameter;
-                  Param.Name := '@Choix_Before';
-                  Param.DataType := ftInteger;
-                  Param.Direction := pdInput;
-                  Param.Value := choix;
-
-                  Param := Parameters.AddParameter;
-                  Param.Name := '@DB';
-                  Param.DataType := ftWideString;
-                  Param.Direction := pdInput;
-                  Param.Value := Db;
-
-                  Param := Parameters.AddParameter;
-                  Param.Name := '@Handle';
-                  Param.DataType := ftInteger;
-                  Param.Direction := pdInput;
-                  Param.Value := N_Handle;
-
-                  for j := 0 to 8 do
-                  begin
-                    Param := Parameters.AddParameter;
-                    Param.Name := '@Param' + inttostr(j);
-                    Param.DataType := ftWideString;
-                    Param.Direction := pdInput;
-                    Param.Value := Tab_Params[j];
-                  end;
-
-                  Param := Parameters.AddParameter;
-                  Param.Name := '@ID';
-                  Param.DataType := ftWideString;
-                  Param.Direction := pdInput;
-                  Param.Value := Print_ID;
-
-                end;
-                
-
-                SP_PRINT.ExecProc;
-                //Envoi d'un message de print
-                if (Form1.Handle_Ouverture > 0) then
-                begin
-                    postmessage(HWND(Form1.Handle_Ouverture), 2101, 0, 0); //où Handle est le handle de la fenetre passé au MagicBtn par $HANDLE
-                end;
-
-                SP_PRINT.Close;
-            end;
-        except
-            Application.HandleException(Self);
-            SP_PRINT.Close;
-            Fin_Appli;
-            exit;
+          for j := 0 to 8 do
+          begin
+            Param := Parameters.AddParameter;
+            Param.Name := '@Param' + inttostr(j);
+            Param.DataType := ftWideString;
+            Param.Direction := pdInput;
+            Param.Value := Tab_Params[j];
+          end;
         end;
+
+        try
+          if (Procedure_Exist(Nom_procedure + '_PRINT_MAIL_BEFORE') = True) then
+          begin
+            SP_PRINT_BEFORE.Open;
+
+            if SP_PRINT_BEFORE.FindField('ID') <> nil then
+            Begin
+              Print_ID := SP_PRINT_BEFORE.fieldbyname('ID').Asstring;
+            End;
+
+            if (SP_PRINT_BEFORE.fieldbyname('Msg').Asstring <> '') then
+            begin
+              choix := Application.MessageBox(PChar(SP_PRINT_BEFORE.fieldbyname('Msg').Asstring),
+                PChar(SP_PRINT_BEFORE.fieldbyname('Caption').AsAnsiString),
+                SP_PRINT_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+
+              if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
+              begin
+                SP_PRINT_BEFORE.close;
+                Fin_Appli;
+                exit;
+              end;
+            end;
+
+            if (SP_PRINT_BEFORE.fieldbyname('Result').Asinteger <> 1) then
+            begin
+              SP_PRINT_BEFORE.close;
+              Fin_Appli;
+              exit;
+            end;
+
+            SP_PRINT_BEFORE.close;
+          end;
+        except
+          Application.HandleException(Self);
+          SP_PRINT_BEFORE.close;
+          Fin_Appli;
+          exit;
+        end;
+
+        SP_PRINT.ProcedureName := Nom_procedure + '_PRINT_MAIL';
+        With SP_PRINT do
+        begin
+          Parameters.Clear;
+
+          Param := Parameters.AddParameter;
+          Param.Name := '@RETURN_VALUE';
+          Param.DataType := ftInteger;
+          Param.Direction := pdReturnValue;
+
+          Param := Parameters.AddParameter;
+          Param.Name := '@cle';
+          Param.DataType := ftInteger;
+          Param.Direction := pdInput;
+          Param.Value := cle;
+
+          Param := Parameters.AddParameter;
+          Param.Name := '@N_User';
+          Param.DataType := ftInteger;
+          Param.Direction := pdInput;
+          Param.Value := N_user;
+
+          Param := Parameters.AddParameter;
+          Param.Name := '@P1';
+          Param.DataType := ftWideString;
+          Param.Direction := pdInput;
+          Param.Value := P1_Procedure;
+
+          Param := Parameters.AddParameter;
+          Param.Name := '@P2';
+          Param.DataType := ftWideString;
+          Param.Direction := pdInput;
+          if Chemin_Fic <> '' then
+          begin
+            Param.Value := Chemin_Fic;
+          end
+          else
+          begin
+            Param.Value := P2_Procedure;
+          end;
+
+          Param := Parameters.AddParameter;
+          Param.Name := '@Choix_Before';
+          Param.DataType := ftInteger;
+          Param.Direction := pdInput;
+          Param.Value := choix;
+
+          Param := Parameters.AddParameter;
+          Param.Name := '@DB';
+          Param.DataType := ftWideString;
+          Param.Direction := pdInput;
+          Param.Value := Db;
+
+          Param := Parameters.AddParameter;
+          Param.Name := '@Handle';
+          Param.DataType := ftInteger;
+          Param.Direction := pdInput;
+          Param.Value := N_Handle;
+
+          for j := 0 to 8 do
+          begin
+            Param := Parameters.AddParameter;
+            Param.Name := '@Param' + inttostr(j);
+            Param.DataType := ftWideString;
+            Param.Direction := pdInput;
+            Param.Value := Tab_Params[j];
+          end;
+
+          Param := Parameters.AddParameter;
+          Param.Name := '@ID';
+          Param.DataType := ftWideString;
+          Param.Direction := pdInput;
+          Param.Value := Print_ID;
+
+        end;
+
+        SP_PRINT.ExecProc;
+        // Envoi d'un message de print
+        if (Form1.Handle_ouverture > 0) then
+        begin
+          postmessage(HWND(Form1.Handle_ouverture), 2101, 0, 0); // où Handle est le handle de la fenetre passé au MagicBtn par $HANDLE
+        end;
+
+        SP_PRINT.close;
+      end;
+    except
+      Application.HandleException(Self);
+      SP_PRINT.close;
+      Fin_Appli;
+      exit;
+    end;
 
     choix := 0;
 
@@ -3277,7 +3310,7 @@ begin
               if (SP_TXT_BEFORE.fieldbyname('Msg').Asstring <> '') then
               begin
                 choix := Application.MessageBox(PChar(SP_TXT_BEFORE.fieldbyname('Msg').Asstring),
-                  PChar(SP_TXT_BEFORE.fieldbyname('Caption').AsString),
+                  PChar(SP_TXT_BEFORE.fieldbyname('Caption').Asstring),
                   SP_TXT_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
 
                 if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
@@ -3458,7 +3491,7 @@ begin
               if (SP_TXT_AFTER.fieldbyname('Msg').Asstring <> '') then
               begin
                 choix := Application.MessageBox(PChar(SP_TXT_AFTER.fieldbyname('Msg').Asstring),
-                  PChar(SP_TXT_AFTER.fieldbyname('Caption').AsString),
+                  PChar(SP_TXT_AFTER.fieldbyname('Caption').Asstring),
                   SP_TXT_AFTER.fieldbyname('Flags').Asinteger + MB_TOPMOST);
 
                 if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
@@ -3702,7 +3735,7 @@ begin
               if (SP_CLOSE_BEFORE.fieldbyname('Msg').Asstring <> '') then
               begin
                 choix := Application.MessageBox(PChar(SP_CLOSE_BEFORE.fieldbyname('Msg').Asstring),
-                  PChar(SP_CLOSE_BEFORE.fieldbyname('Caption').AsString),
+                  PChar(SP_CLOSE_BEFORE.fieldbyname('Caption').Asstring),
                   SP_CLOSE_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
 
                 if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
@@ -3797,7 +3830,7 @@ begin
               if (SP_CLOSE_AFTER.fieldbyname('Msg').Asstring <> '') then
               begin
                 choix := Application.MessageBox(PChar(SP_CLOSE_AFTER.fieldbyname('Msg').Asstring),
-                  PChar(SP_CLOSE_AFTER.fieldbyname('Caption').AsString),
+                  PChar(SP_CLOSE_AFTER.fieldbyname('Caption').Asstring),
                   SP_CLOSE_AFTER.fieldbyname('Flags').Asinteger + MB_TOPMOST);
 
                 if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
@@ -3908,7 +3941,7 @@ begin
               if (SP_LOCK_BEFORE.fieldbyname('Msg').Asstring <> '') then
               begin
                 choix := Application.MessageBox(PChar(SP_LOCK_BEFORE.fieldbyname('Msg').Asstring),
-                  PChar(SP_LOCK_BEFORE.fieldbyname('Caption').AsString),
+                  PChar(SP_LOCK_BEFORE.fieldbyname('Caption').Asstring),
                   SP_LOCK_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
 
                 if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
@@ -4011,7 +4044,7 @@ begin
               if (SP_LOCK_AFTER.fieldbyname('Msg').Asstring <> '') then
               begin
                 choix := Application.MessageBox(PChar(SP_LOCK_AFTER.fieldbyname('Msg').Asstring),
-                  PChar(SP_LOCK_AFTER.fieldbyname('Caption').AsString),
+                  PChar(SP_LOCK_AFTER.fieldbyname('Caption').Asstring),
                   SP_LOCK_AFTER.fieldbyname('Flags').Asinteger + MB_TOPMOST);
 
                 if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
@@ -4135,7 +4168,7 @@ begin
                     if (SP_LISTE_FICHES_BEFORE.fieldbyname('Msg').Asstring <> '') then
                     begin
                       choix := Application.MessageBox(PChar(SP_LISTE_FICHES_BEFORE.fieldbyname('Msg').Asstring),
-                        PChar(SP_LISTE_FICHES_BEFORE.fieldbyname('Caption').AsString),
+                        PChar(SP_LISTE_FICHES_BEFORE.fieldbyname('Caption').Asstring),
                         SP_LISTE_FICHES_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
                       if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
                       begin
@@ -4291,7 +4324,7 @@ begin
             if (SP_REFRESH_BEFORE.fieldbyname('Msg').Asstring <> '') then
             begin
               choix := Application.MessageBox(PChar(SP_REFRESH_BEFORE.fieldbyname('Msg').Asstring),
-                PChar(SP_REFRESH_BEFORE.fieldbyname('Caption').AsString),
+                PChar(SP_REFRESH_BEFORE.fieldbyname('Caption').Asstring),
                 SP_REFRESH_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
 
               if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
@@ -4428,7 +4461,7 @@ begin
             if (SP_OPEN_APPLI_BEFORE.fieldbyname('Msg').Asstring <> '') then
             begin
               choix := Application.MessageBox(PChar(SP_OPEN_APPLI_BEFORE.fieldbyname('Msg').Asstring),
-                PChar(SP_OPEN_APPLI_BEFORE.fieldbyname('Caption').AsString),
+                PChar(SP_OPEN_APPLI_BEFORE.fieldbyname('Caption').Asstring),
                 SP_OPEN_APPLI_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
               if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
               begin
@@ -4454,13 +4487,13 @@ begin
 
         while (not SP_OPEN_APPLI.Eof) do
         begin
-          Param_Str := SP_OPEN_APPLI.fieldbyname('Parametres').AsString;
+          Param_Str := SP_OPEN_APPLI.fieldbyname('Parametres').Asstring;
           Param_Str := stringreplace(Param_Str, '$DB', Db, []);
           Param_Str := stringreplace(Param_Str, '$USER', inttostr(N_user), []);
           Param_Str := stringreplace(Param_Str, '$N', inttostr(cle), []);
           Param_Str := stringreplace(Param_Str, '$HANDLE', inttostr(Handle), []);
 
-          Fexe := SP_OPEN_APPLI.fieldbyname('Appli').AsString;
+          Fexe := SP_OPEN_APPLI.fieldbyname('Appli').Asstring;
           if Pos('\', Fexe) <= 0 then
           begin
             Fexe := ExtractFileDir(ParamStr(0)) + '\' + Fexe;
@@ -4586,7 +4619,7 @@ begin
   if SP_COPY_FILE.fieldbyname('Fonction').AsAnsiString = 'Copier' then
   begin
     lpFileOp.wFunc := FO_COPY;
-    lpFileOp.pTo := PWideChar(Cible);
+    lpFileOp.pTo := PwideChar(Cible);
   end;
   if SP_COPY_FILE.fieldbyname('Fonction').AsAnsiString = 'Effacer' then
   begin
@@ -4596,12 +4629,12 @@ begin
   if SP_COPY_FILE.fieldbyname('Fonction').AsAnsiString = 'Deplacer' then
   begin
     lpFileOp.wFunc := FO_MOVE;
-    lpFileOp.pTo := PWideChar(Cible);
+    lpFileOp.pTo := PwideChar(Cible);
   end;
   if SP_COPY_FILE.fieldbyname('Fonction').AsAnsiString = 'Renommer' then
   begin
     lpFileOp.wFunc := FO_RENAME;
-    lpFileOp.pTo := PWideChar(Cible);
+    lpFileOp.pTo := PwideChar(Cible);
   end;
 
   if SP_COPY_FILE.fieldbyname('PossibleAnnuler').AsAnsiString = 'Oui' then

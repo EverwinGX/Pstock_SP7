@@ -60,4 +60,6 @@ SP7 Build 0
    Correction sur fenêtre Param
 SP7 Build 2
         Correction sur fenêtre Param liste SP
-
+SP7 Build 3
+        Correction sur la PS READ_EXCEL on passe chemin_Fic au paramètre P2
+        Dans la lecture d'un excel on lit la valeur et non plus la formule
