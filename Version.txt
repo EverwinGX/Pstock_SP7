@@ -88,3 +88,7 @@ SP7 Build 10
 SP7 Build 11
         Ajout des paramètres @P1 et @P2 optionnel dans les procédures LISTE_FICHES & LISTE_FICHES_BEFORE
         Correction pour mieux afficher les messages d'erreurs SQL
+SP7 Build 12
+        Correction de la gestion des exports TXT : ATTENTION le retour à la ligne doit être envoyée dans le data, il n'est plus géré par delphi
+        Ajout des paramètre P1 et P2 (en option) sur les PS TXT
+

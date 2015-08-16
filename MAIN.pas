@@ -433,7 +433,7 @@ begin
 
     SetWindowLong(Application.Handle, GWL_EXSTYLE, GetWindowLong(Application.Handle, GWL_EXSTYLE) and not WS_EX_APPWINDOW or WS_EX_TOOLWINDOW);
   except
-    //Application.HandleException(Self);
+    // Application.HandleException(Self);
   end;
 
   // application.ShowMainForm:=false;
@@ -3397,9 +3397,13 @@ var
   nom_fichier: string;
   bcl: Integer;
   nombre: Integer;
-  Buffer: PChar;
-  MemSize: Integer;
-  Stream: TBlobStream;
+  // Buffer: PChar;
+  // MemSize: Integer;
+  // Stream: TBlobStream;
+  IndexFic: Integer;
+  AStream: TMemoryStream;
+  AStream_Fic: TMemoryStream;
+  FinLigne: string;
   Fexe: string;
   Lock: Integer;
   Param: TADParam;
@@ -3467,6 +3471,24 @@ begin
           Param.ParamType := ptInput;
           Param.Value := Tab_Params[j];
         end;
+        if Param_Exist(SP_TXT.StoredProcName, '@P1') = True then
+        begin
+          Param := Params.Add;
+          Param.Name := '@P1';
+          Param.DataType := ftString;
+          Param.ParamType := ptInput;
+          Param.Value := P1_Procedure;
+
+        end;
+
+        if Param_Exist(SP_TXT.StoredProcName, '@P2') = True then
+        begin
+          Param := Params.Add;
+          Param.Name := '@P2';
+          Param.DataType := ftString;
+          Param.ParamType := ptInput;
+          Param.Value := P2_Procedure;
+        end;
       end;
 
       try
@@ -3502,6 +3524,25 @@ begin
               Param.ParamType := ptInput;
               Param.Value := Tab_Params[j];
             end;
+            if Param_Exist(SP_TXT_BEFORE.StoredProcName, '@P1') = True then
+            begin
+              Param := Params.Add;
+              Param.Name := '@P1';
+              Param.DataType := ftString;
+              Param.ParamType := ptInput;
+              Param.Value := P1_Procedure;
+
+            end;
+
+            if Param_Exist(SP_TXT_BEFORE.StoredProcName, '@P2') = True then
+            begin
+              Param := Params.Add;
+              Param.Name := '@P2';
+              Param.DataType := ftString;
+              Param.ParamType := ptInput;
+              Param.Value := P2_Procedure;
+            end;
+
           end;
 
           try
@@ -3545,56 +3586,51 @@ begin
           while not SP_TXT.Eof do
           begin
 
-            if (nom_fichier <> SP_TXT.FieldByName('Repertoire').AsAnsiString + '\' + SP_TXT.FieldByName('Fichier').AsAnsiString) then
+            nom_fichier := SP_TXT.FieldByName('Repertoire').AsAnsiString + '\' + SP_TXT.FieldByName('Fichier').AsAnsiString;
+            AStream := TMemoryStream.Create; (SP_TXT.FieldByName('DATA') as TBlobField)
+            .SaveToStream(AStream);
+
+            StringList.Sort;
+            IndexFic := StringList.IndexOf(nom_fichier);
+            if IndexFic >= 0 then
             begin
-              // si fichier change ferme l'ncien et ouvre le nouveau (si deja ouvert on ajoute a la fin)
-              if (nom_fichier <> '') then
-                closefile(Fichier);
-              nom_fichier := SP_TXT.FieldByName('Repertoire').AsAnsiString + '\' + SP_TXT.FieldByName('Fichier').AsAnsiString;
-
-              AssignFile(Fichier, nom_fichier);
-
-              StringList.Sort;
-
-              try
-                if StringList.IndexOf(nom_fichier) >= 0 then
-                  Append(Fichier)
-                else
-                  Rewrite(Fichier);
-              except
-                Application.HandleException(Self);
-                StringList.Clear;
-                StringList.Free;
-                Fin_Appli;
-                Exit;
-              end;
+              AStream_Fic := (StringList.Objects[IndexFic] as TMemoryStream);
+              AStream_Fic.Position := AStream_Fic.size;
+              AStream.Position := 0;
+              AStream_Fic.Position := AStream_Fic.size;
+              AStream_Fic.Position := AStream_Fic.size;
+              AStream_Fic.CopyFrom(AStream, AStream.size);
+            end
+            else
+            begin
+              AStream_Fic := TMemoryStream.Create;
+              AStream_Fic.LoadFromStream(AStream);
+              // AStream_Fic.Position:=0;
               // ajoute a la liste le nom du nouveau fichier traité
-              StringList.Add(nom_fichier);
+              StringList.Addobject(nom_fichier, AStream_Fic);
             end;
 
-            if (not SP_TXT.FieldByName('DATA').isnull) then
-            begin
-              Stream := TBlobStream.Create(SP_TXT.FieldByName('DATA') as TBlobField, bmRead);
-              try
-                MemSize := Stream.size;
-                Inc(MemSize); { pour l'espace du zéro terminal. }
-                Buffer := AllocMem(MemSize); { Alloue la mémoire. }
-                try
-                  Stream.Read(Buffer^, MemSize);
-                  { Lit le champ Notes dans buffer. }
-                  write(Fichier, Buffer);
-                  writeln(Fichier, '');
-                finally
-                  FreeMem(Buffer, MemSize);
-                end;
-              finally
-                Stream.Free;
-              end;
-            end;
             SP_TXT.Next;
           end;
           SP_TXT.Last;
-          closefile(Fichier);
+
+          for i := 0 to StringList.Count - 1 do
+          begin
+            AStream_Fic := (StringList.Objects[i] as TMemoryStream);
+            AStream_Fic.Position := 0;
+            AStream_Fic.SaveToFile(StringList.Strings[i]);
+          end;
+
+          if AStream <> nil then
+            freeandnil(AStream);
+
+          if AStream_Fic <> nil then
+            freeandnil(AStream_Fic);
+
+          for i := StringList.Count - 1 downto 0 do
+          begin
+            StringList.Delete(i);
+          end;
 
           // Parcours la vue pour validation des données
           if (Procedure_Exist(Nom_procedure + '_TXT_VALIDE') = True) then
@@ -3633,6 +3669,25 @@ begin
                 Param.DataType := ftString;
                 Param.ParamType := ptInput;
                 Param.Value := Tab_Params[j];
+              end;
+
+              if Param_Exist(SP_TXT_VALIDE.StoredProcName, '@P1') = True then
+              begin
+                Param := Params.Add;
+                Param.Name := '@P1';
+                Param.DataType := ftString;
+                Param.ParamType := ptInput;
+                Param.Value := P1_Procedure;
+
+              end;
+
+              if Param_Exist(SP_TXT_VALIDE.StoredProcName, '@P2') = True then
+              begin
+                Param := Params.Add;
+                Param.Name := '@P2';
+                Param.DataType := ftString;
+                Param.ParamType := ptInput;
+                Param.Value := P2_Procedure;
               end;
             end;
 
@@ -3678,6 +3733,25 @@ begin
               Param.DataType := ftString;
               Param.ParamType := ptInput;
               Param.Value := Tab_Params[j];
+            end;
+
+            if Param_Exist(SP_TXT_AFTER.StoredProcName, '@P1') = True then
+            begin
+              Param := Params.Add;
+              Param.Name := '@P1';
+              Param.DataType := ftString;
+              Param.ParamType := ptInput;
+              Param.Value := P1_Procedure;
+
+            end;
+
+            if Param_Exist(SP_TXT_AFTER.StoredProcName, '@P2') = True then
+            begin
+              Param := Params.Add;
+              Param.Name := '@P2';
+              Param.DataType := ftString;
+              Param.ParamType := ptInput;
+              Param.Value := P2_Procedure;
             end;
           end;
 

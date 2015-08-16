@@ -93,7 +93,7 @@
 						<Source Name="MainSource">EGX_SP7.dpr</Source>
 					</Source>
 					<Parameters>
-						<Parameters Name="RunParams">ALLAMAN 946 17 860142 EGXS_SP_DAC_PRINT_BTN 0 0 1 0</Parameters>
+						<Parameters Name="RunParams">MODGX_EGX_SP 1 17 0 EGXS_SP_TEST_TXT_BTN 0 1 1 0</Parameters>
 						<Parameters Name="UseLauncher">False</Parameters>
 						<Parameters Name="LoadAllSymbols">True</Parameters>
 						<Parameters Name="LoadUnspecifiedSymbols">False</Parameters>
@@ -103,11 +103,11 @@
 					</Language>
 					<VersionInfo>
 						<VersionInfo Name="IncludeVerInfo">True</VersionInfo>
-						<VersionInfo Name="AutoIncBuild">False</VersionInfo>
+						<VersionInfo Name="AutoIncBuild">True</VersionInfo>
 						<VersionInfo Name="MajorVer">7</VersionInfo>
 						<VersionInfo Name="MinorVer">0</VersionInfo>
-						<VersionInfo Name="Release">0</VersionInfo>
-						<VersionInfo Name="Build">11</VersionInfo>
+						<VersionInfo Name="Release">12</VersionInfo>
+						<VersionInfo Name="Build">0</VersionInfo>
 						<VersionInfo Name="Debug">False</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -119,7 +119,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">7.0.0.11</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">7.0.12.0</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>
