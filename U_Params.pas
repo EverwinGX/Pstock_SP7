@@ -807,6 +807,10 @@ end;
 
 procedure TF_Params.CBO_Update(Sender: TObject; Param, Text: string);
 begin
+  if text ='' then
+  begin
+     text:='?'
+  end;
   AdvPanelFiltres.Parameter[Param] := Text;
   wq_custom.Close;
 
@@ -822,8 +826,7 @@ end;
 
 procedure TF_Params.FormClose(Sender: TObject; var Action: TCloseAction);
 begin ;
-  AdvPanelFiltres.Items.Clear;
-  AdvPanelFiltres.Free;
+
   wsp_Filtres.Close;
 
   if F_Info <> nil then
@@ -1137,6 +1140,10 @@ end;
 procedure TF_Params.AdvPanelFiltresParamEditDone(Sender: TObject; idx: Integer;
   href: String; var value: String);
 begin
+  if value ='' then
+  begin
+    value:='?';
+  end;
 
   AdvPanelFiltres.Parameter[href] := value;
 

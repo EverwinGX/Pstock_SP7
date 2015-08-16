@@ -58,4 +58,6 @@ SP7 Build 0
     Ajout d'une nouvelle gestion de PRINT avec de nouveaux paramètres ID entre _PRINT et _PRINT_BEFORE
  SP7 Build 1
    Correction sur fenêtre Param
+SP7 Build 2
+        Correction sur fenêtre Param liste SP
 
