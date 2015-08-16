@@ -7,7 +7,7 @@ uses
   StdCtrls, Buttons, Db, DBTables, wwstorep, fcImage, fcimageform,
   AdvPicture, rtflabel, ExtCtrls, Shader, EllipsLabel, ThreadGenesysSP,
   ThreadGenesysSPINFO,
-  AdvEdit, ShellAPI, ImgList, ComCtrls, wwriched, Wwquery, FileCtrl, ShlObj,
+  AdvEdit, ShellAPI , ImgList, ComCtrls, wwriched, Wwquery, FileCtrl, ShlObj,
   GradientLabel, fcLabel, StrCryptage, Wwdatsrc, Grids, Excel_TLB, ADODB, inifiles, Wwdbigrd, Wwdbgrid, OleServer, uADStanIntf, uADStanOption, uADStanParam, uADStanError, uADDatSManager, uADPhysIntf,
   uADDAptIntf, uADStanAsync, uADDAptManager, uADGUIxIntf, uADGUIxFormsWait, uADStanDef, uADStanPool, uADPhysManager, uADCompClient, uADPhysODBCBase, uADPhysODBC, uADCompGUIx, ConnexionSecurise,
   AdvToolBar, AdvToolBarStylers, AdvOfficeStatusBar, AdvOfficeStatusBarStylers, AdvPanel, uADCompDataSet, AdvAppStyler, aniicon, AdvShape, uADGUIxFormsfError;
@@ -5280,7 +5280,7 @@ begin
   if FindFirst(Path + Filename, Attribut, Rec) = 0 then
     try
       repeat
-        if ((Rec.Attr and faDirectory) <> 0) and (Rec.Name <> '.') and (Rec.Name <> '..') and ((ListeInclude = 1) or (ListeInclude = 2)) then
+        if (Rec.Name <> '.') and (Rec.Name <> '..') and ((ListeInclude = 1) or (ListeInclude = 2)) then
         begin
           wq_LISTE_FICHIERS.Append;
           wq_LISTE_FICHIERS.FieldByName('N_user').asinteger := N_user;

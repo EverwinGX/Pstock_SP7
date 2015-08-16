@@ -1,7 +1,10 @@
+SP7 Build 14
+        Amélioration pour les connexions avec BDE en ALIAS
 SP7 Build 13
         Amélioration de la fonction de listes de fichiers
                 Ajout des informations sur le fichier (table) : [Date_Modif], [Date_Create],[Date_Access],[Extension],[Taille]
                 Posisibilité sélectionner les élements enregistrés : ListeInclude = ? -- 1 = Fichiers / 2 = Fichiers + Rep / 3 = Rep
+        Ajout d'une Procedure _AFTER qui s'éxécute en tout dernier (permet le nettoyage des tables temporaires)
 SP7 Build 12
         Correction de la gestion des exports TXT : ATTENTION le retour à la ligne doit être envoyée dans le data, il n'est plus géré par delphi
         Ajout des paramètre P1 et P2 (en option) sur les PS TXT
@@ -93,21 +96,4 @@ SP4 build 2
     Ajout de la gestion des procédures SELECT_FILE et OPEN_APPLI
 
 Taille du main: 105 * 281
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
