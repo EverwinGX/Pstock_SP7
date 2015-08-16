@@ -1,4 +1,4 @@
-Taille du main: 68 * 240
+Taille du main: 105 * 281
 
 SP4 build 2
     Ajout de la gestion des procédures SELECT_FILE et OPEN_APPLI
@@ -85,4 +85,6 @@ SP7 Build 9
 SP7 Build 10
         Ajout d'un paramètres @Nav_Fiche optionnel dans la procédure principale -1 (fiche Pre) +1 (fiche suivante)
         Correction pour la gestion du lock (mauvais passage du handle)
-
+SP7 Build 11
+        Ajout des paramètres @P1 et @P2 optionnel dans les procédures LISTE_FICHES & LISTE_FICHES_BEFORE
+        Correction pour mieux afficher les messages d'erreurs SQL

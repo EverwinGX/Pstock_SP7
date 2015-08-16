@@ -10,7 +10,7 @@ uses
   AdvEdit, ShellAPI, ImgList, ComCtrls, wwriched, Wwquery, FileCtrl, ShlObj,
   GradientLabel, fcLabel, StrCryptage, Wwdatsrc, Grids, Excel_TLB, ADODB, inifiles, Wwdbigrd, Wwdbgrid, OleServer, uADStanIntf, uADStanOption, uADStanParam, uADStanError, uADDatSManager, uADPhysIntf,
   uADDAptIntf, uADStanAsync, uADDAptManager, uADGUIxIntf, uADGUIxFormsWait, uADStanDef, uADStanPool, uADPhysManager, uADCompClient, uADPhysODBCBase, uADPhysODBC, uADCompGUIx, ConnexionSecurise,
-  AdvToolBar, AdvToolBarStylers, AdvOfficeStatusBar, AdvOfficeStatusBarStylers, AdvPanel, uADCompDataSet, AdvAppStyler, aniicon, AdvShape;
+  AdvToolBar, AdvToolBarStylers, AdvOfficeStatusBar, AdvOfficeStatusBarStylers, AdvPanel, uADCompDataSet, AdvAppStyler, aniicon, AdvShape, uADGUIxFormsfError;
 
 type
   TForm1 = class(TForm)
@@ -433,7 +433,7 @@ begin
 
     SetWindowLong(Application.Handle, GWL_EXSTYLE, GetWindowLong(Application.Handle, GWL_EXSTYLE) and not WS_EX_APPWINDOW or WS_EX_TOOLWINDOW);
   except
-    Application.HandleException(Self);
+    //Application.HandleException(Self);
   end;
 
   // application.ShowMainForm:=false;
@@ -4341,6 +4341,26 @@ begin
                 Param.ParamType := ptInput;
                 Param.Value := Tab_Params[j];
               end;
+
+              if Param_Exist(SP_LISTE_FICHES.StoredProcName, '@P1') = True then
+              begin
+                Param := Params.Add;
+                Param.Name := '@P1';
+                Param.DataType := ftString;
+                Param.ParamType := ptInput;
+                Param.Value := P1_Procedure;
+
+              end;
+
+              if Param_Exist(SP_LISTE_FICHES.StoredProcName, '@P2') = True then
+              begin
+                Param := Params.Add;
+                Param.Name := '@P2';
+                Param.DataType := ftString;
+                Param.ParamType := ptInput;
+                Param.Value := P2_Procedure;
+              end;
+
             end;
 
             try
@@ -4378,6 +4398,26 @@ begin
                     Param.ParamType := ptInput;
                     Param.Value := Tab_Params[j];
                   end;
+
+                  if Param_Exist(SP_LISTE_FICHES_BEFORE.StoredProcName, '@P1') = True then
+                  begin
+                    Param := Params.Add;
+                    Param.Name := '@P1';
+                    Param.DataType := ftString;
+                    Param.ParamType := ptInput;
+                    Param.Value := P1_Procedure;
+
+                  end;
+
+                  if Param_Exist(SP_LISTE_FICHES_BEFORE.StoredProcName, '@P2') = True then
+                  begin
+                    Param := Params.Add;
+                    Param.Name := '@P2';
+                    Param.DataType := ftString;
+                    Param.ParamType := ptInput;
+                    Param.Value := P2_Procedure;
+                  end;
+
                 end;
                 try
                   if (Procedure_Exist(Nom_procedure + '_LISTE_FICHES_BEFORE') = True) then
