@@ -11,7 +11,7 @@ type
     { Déclarations privées }
     LabelCommentaireCaption: string;
 
-    LabelCommentaire: TadvEdit;
+    LabelCommentaire: Tedit;
 
     SP: TADStoredProc;
     SP_Memos: TADStoredProc;
@@ -30,7 +30,7 @@ type
     procedure HandleException; virtual;
   public
     Stopped: Boolean;
-    constructor Create(L1: TadvEdit; I0: TADStoredProc; I1: TADStoredProc; M0: TwwDBRichEdit; M1: TwwDBRichEdit; Q0: TADQuery);
+    constructor Create(L1: Tedit; I0: TADStoredProc; I1: TADStoredProc; M0: TwwDBRichEdit; M1: TwwDBRichEdit; Q0: TADQuery);
   end;
 
 implementation
@@ -52,7 +52,7 @@ implementation
 uses
   forms;
 
-constructor TThreadGenesysSP.Create(L1: TadvEdit; I0: TADStoredProc; I1: TADStoredProc; M0: TwwDBRichEdit; M1: TwwDBRichEdit; Q0: TADQuery);
+constructor TThreadGenesysSP.Create(L1: Tedit; I0: TADStoredProc; I1: TADStoredProc; M0: TwwDBRichEdit; M1: TwwDBRichEdit; Q0: TADQuery);
 begin
   LabelCommentaire := L1;
   SP := I0;
