@@ -28,7 +28,7 @@ type
     TU_Valeurs2: TUpdateSQL;
     wq_EXCEL_READ_TAB0: TwwQuery;
     TU_TAB2: TUpdateSQL;
-    wq_EXCEL_READ_FIC: TADOQuery;
+    wq_EXCEL_READ_FIC2: TADOQuery;
     wq_EXCEL_READ_LOG2: TADOQuery;
     wq_EXCEL_READ_VAL2: TADOQuery;
     wq_EXCEL_READ_TAB2: TADOQuery;
@@ -105,6 +105,7 @@ type
     IconeListePNG: TImageList;
     IconesFiches16PNG: TImageList;
     wq_Exist_Param: TADQuery;
+    wq_EXCEL_READ_FIC: TADQuery;
     procedure BitBtn1Click(Sender: TObject);
 
     procedure AppException(Sender: TObject; E: Exception);
@@ -376,14 +377,14 @@ begin
     // *************************************************************
     Handle_ouverture := N_Handle;
     // Database.AliasName := Db;
-    database.Params.Clear;
+    Database.Params.Clear;
 
     Try
       // Connexion FireDac
       ConnexionSecuriseFireDac.AliasBD := Db;
       ConnexionSecuriseFireDac.Connexion;
     Except
-      MessageDlg('Problème d''ouverture de la base de données : ' + Db + #13 + #10 + 'Veuillez vérifier que SQL Server est démarré.' + #13 + #10 + 'Veuillez vérifier les sources de données ODBC.'+ #13 + #10 + database.ConnectionString , mtError, [mbOK], 0);
+      MessageDlg('Problème d''ouverture de la base de données : ' + Db + #13 + #10 + 'Veuillez vérifier que SQL Server est démarré.' + #13 + #10 + 'Veuillez vérifier les sources de données ODBC.' + #13 + #10 + Database.ConnectionString, mtError, [mbOK], 0);
       Database.close;
       Application.Terminate;
       Exit;
@@ -1538,6 +1539,7 @@ begin
       wq_EXCEL_READ_LOG.SQL.Clear;
       wq_EXCEL_READ_LOG.SQL.Add('SELECT * FROM ' + stringreplace(Nom_procedure, '_SP_', '_TB_', [rfReplaceAll, rfIgnoreCase]) + '_READ_XLS_LOG');
       wq_EXCEL_READ_LOG.open;
+      wq_EXCEL_READ_LOG.Append;
 
       wq_EXCEL_READ_VAL.close;
       wq_EXCEL_READ_VAL.SQL.Clear;
@@ -1782,12 +1784,15 @@ begin
 
         SP_EXCEL_READ.open;
         SP_EXCEL_READ.first;
-
+        Read_Excel_Log('', 'Ouverture Excel', Fichier_excel, '', N_user, Read_Excel_session);
         VarClear(Olexls);
         Olexls := CreateOleObject('Excel.application');
 
+        Read_Excel_Log('', 'Debut de parcours des fichiers', Fichier_excel, '', N_user, Read_Excel_session);
+
         if SP_EXCEL_READ.FieldByName('Fichier').AsAnsiString <> '' then
         begin
+          Read_Excel_Log('', 'Entré dans la boucle', Fichier_excel, '', N_user, Read_Excel_session);
 
           Olexls.Visible := False;
           Fichier_excel_old := '';
@@ -1796,7 +1801,7 @@ begin
           while not SP_EXCEL_READ.Eof do
           begin
             Fichier_excel := SP_EXCEL_READ.FieldByName('Fichier').AsAnsiString;
-
+            Read_Excel_Log('', 'Debut Lecture', Fichier_excel, '', N_user, Read_Excel_session);
             if (Fichier_excel <> Fichier_excel_old) or (Read_Excel_File_Ok = False) then
             begin
               if (Fichier_excel_old <> '') and (Read_Excel_File_Ok = True) then
@@ -2019,9 +2024,6 @@ begin
         if wq_EXCEL_READ_TAB.Active = True then
           wq_EXCEL_READ_TAB.close;
 
-        if wq_EXCEL_READ_LOG.Active = True then
-          wq_EXCEL_READ_LOG.close;
-
         SP_EXCEL_READ.close;
         if (Procedure_Exist(Nom_procedure + '_READ_XLS_MOVE') = True) then
         begin
@@ -2088,8 +2090,9 @@ begin
 
           while not SP_EXCEL_READ_MOVE.Eof do
           begin
-
-            Result_Move := MoveFileEx(PChar(SP_EXCEL_READ_MOVE.FieldByName('Fichier_Source').AsAnsiString), PChar(SP_EXCEL_READ_MOVE.FieldByName('Fichier_Destination').AsAnsiString), MOVEFILE_COPY_ALLOWED + MOVEFILE_REPLACE_EXISTING);
+            Read_Excel_Log('', 'Deplacement du ficher', SP_EXCEL_READ_MOVE.FieldByName('Fichier_Source').AsAnsiString, SP_EXCEL_READ_MOVE.FieldByName('Fichier_Destination').AsAnsiString, N_user, Read_Excel_session);
+            Result_Move := MoveFileWithProgress(PChar(SP_EXCEL_READ_MOVE.FieldByName('Fichier_Source').AsAnsiString), PChar(SP_EXCEL_READ_MOVE.FieldByName('Fichier_Destination').AsAnsiString), MOVEFILE_COPY_ALLOWED + MOVEFILE_REPLACE_EXISTING);
+            Read_Excel_Log('', 'Résultat move', booltostr(Result_Move), '', N_user, Read_Excel_session);
             // if Integer(Result_Move) <> 0 then
             // begin
             // Read_Excel_Log('KO', 'Problème de déplacement', SP_EXCEL_READ_MOVE.fieldbyname('Fichier_Source').AsAnsiString, '', N_user, Read_Excel_session);
@@ -2167,6 +2170,9 @@ begin
 
       end;
     end;
+
+    if wq_EXCEL_READ_LOG.Active = True then
+      wq_EXCEL_READ_LOG.close;
 
     // Gestion de la fusion excel
     try

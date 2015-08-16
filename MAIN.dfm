@@ -490,7 +490,7 @@ object Form1: TForm1
     Version = '1.4.2.1'
   end
   object fcLabel1: TfcLabel
-    Left = 79
+    Left = 83
     Top = 62
     Width = 138
     Height = 16
@@ -676,7 +676,7 @@ object Form1: TForm1
     Left = 552
     Top = 96
     Bitmap = {
-      494C0101430045008C0010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010143004500900010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000001001000001002000000000000010
       0100000000000000000000000000000000000000000000000000000000000000
       00000000000000000000000000000000000000000000DFEFFBFF000000000000
@@ -2931,7 +2931,7 @@ object Form1: TForm1
     Left = 560
     Top = 144
     Bitmap = {
-      494C0101640167018C0010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010164016701900010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       000000000000360000002800000040000000A0050000010020000000000000A0
       0500000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -14829,8 +14829,8 @@ object Form1: TForm1
       '    xtype in ( '#39'P'#39')'
       '')
     ValidateWithMask = True
-    Left = 535
-    Top = 536
+    Left = 519
+    Top = 488
   end
   object wq_EXCEL_READ_VAL0: TwwQuery
     DatabaseName = 'db'
@@ -14838,8 +14838,8 @@ object Form1: TForm1
     SQL.Strings = (
       'SELECT * from EGXS_TB_GEN_IMPORT_CDE_CLI_BTN_READ_EXCEL_VALEURS')
     ValidateWithMask = True
-    Left = 527
-    Top = 448
+    Left = 447
+    Top = 368
   end
   object wq_EXCEL_READ_LOG0: TwwQuery
     DatabaseName = 'db'
@@ -14852,8 +14852,8 @@ object Form1: TForm1
       '    xtype in ( '#39'P'#39')'
       '')
     ValidateWithMask = True
-    Left = 535
-    Top = 488
+    Left = 527
+    Top = 424
   end
   object TU_Valeurs2: TUpdateSQL
     Left = 176
@@ -14866,13 +14866,13 @@ object Form1: TForm1
       'SELECT * from EGXS_TB_GEN_IMPORT_CDE_CLI_BTN_READ_EXCEL_TAB')
     ValidateWithMask = True
     Left = 519
-    Top = 416
+    Top = 376
   end
   object TU_TAB2: TUpdateSQL
     Left = 256
     Top = 456
   end
-  object wq_EXCEL_READ_FIC: TADOQuery
+  object wq_EXCEL_READ_FIC2: TADOQuery
     Parameters = <>
     SQL.Strings = (
       'SELECT '
@@ -14881,8 +14881,8 @@ object Form1: TForm1
       'WHERE '
       '    xtype in ( '#39'P'#39')'
       '')
-    Left = 16
-    Top = 512
+    Left = 248
+    Top = 368
   end
   object wq_EXCEL_READ_LOG2: TADOQuery
     Parameters = <>
@@ -14893,8 +14893,8 @@ object Form1: TForm1
       'WHERE '
       '    xtype in ( '#39'P'#39')'
       '')
-    Left = 272
-    Top = 520
+    Left = 56
+    Top = 624
   end
   object wq_EXCEL_READ_VAL2: TADOQuery
     Parameters = <>
@@ -14905,8 +14905,8 @@ object Form1: TForm1
       'WHERE '
       '    xtype in ( '#39'P'#39')'
       '')
-    Left = 104
-    Top = 512
+    Left = 56
+    Top = 520
   end
   object wq_EXCEL_READ_TAB2: TADOQuery
     Parameters = <>
@@ -14917,8 +14917,8 @@ object Form1: TForm1
       'WHERE '
       '    xtype in ( '#39'P'#39')'
       '')
-    Left = 192
-    Top = 512
+    Left = 48
+    Top = 576
   end
   object ADODataSet1: TADODataSet
     Parameters = <>
@@ -14939,8 +14939,8 @@ object Form1: TForm1
       'WHERE '
       '    xtype in ( '#39'P'#39')'
       '')
-    Left = 344
-    Top = 520
+    Left = 120
+    Top = 256
   end
   object AdvFormStyler1: TAdvFormStyler
     Style = tsOffice2010Blue
@@ -14962,8 +14962,8 @@ object Form1: TForm1
       'WHERE '
       '    xtype in ( '#39'P'#39')'
       '')
-    Left = 568
-    Top = 604
+    Left = 408
+    Top = 580
   end
   object AdvPanelStyler1: TAdvPanelStyler
     Tag = 0
@@ -15936,8 +15936,8 @@ object Form1: TForm1
       'WHERE '
       '    xtype in ( '#39'P'#39')'
       '')
-    Left = 664
-    Top = 604
+    Left = 592
+    Top = 588
   end
   object wq_EXCEL_READ_LOG: TADQuery
     Connection = Database
@@ -15948,8 +15948,8 @@ object Form1: TForm1
       'WHERE '
       '    xtype in ( '#39'P'#39')'
       '')
-    Left = 760
-    Top = 604
+    Left = 720
+    Top = 572
   end
   object TU_TAB: TADUpdateSQL
     Connection = Database
@@ -16091,7 +16091,7 @@ object Form1: TForm1
     Left = 195
     Top = 168
     Bitmap = {
-      494C01014F00E401540910001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C01014F00E401580910001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000004001000001002000000000000040
       010000000000000000000000000000000000000000000000001D000000340000
       0036000000360000003600000036000000360000003600000036000000360000
@@ -18742,7 +18742,7 @@ object Form1: TForm1
     Left = 115
     Top = 184
     Bitmap = {
-      494C01015000E401540A10001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C01015000E401580A10001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000005001000001002000000000000050
       0100000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -21533,5 +21533,17 @@ object Form1: TForm1
       '')
     Left = 1016
     Top = 12
+  end
+  object wq_EXCEL_READ_FIC: TADQuery
+    Connection = Database
+    SQL.Strings = (
+      'SELECT '
+      '   Nom=Cast(o.[name] AS varchar(150))'
+      'FROM dbo.sysobjects o '
+      'WHERE '
+      '    xtype in ( '#39'P'#39')'
+      '')
+    Left = 544
+    Top = 548
   end
 end

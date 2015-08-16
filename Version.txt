@@ -79,3 +79,6 @@ SP7 Build 7
 SP7 Build 8
         Ajout des paramètres optionnels @Choix_Before_Principal dans les procédure _PRINT_MAIL et _PRIN_MAIL_BEFORE
         Ajout des paramètres optionnels @P1 et @P2 dans la Procedure Before Principal
+SP7 Build 9
+       Correction import excel : lecture repertoire avec Msg erreur
+       Correction de deplacement de fichier en fin de procedure ?
