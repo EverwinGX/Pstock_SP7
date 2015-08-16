@@ -1,94 +1,113 @@
-Taille du main: 105 * 281
-
-SP4 build 2
-    Ajout de la gestion des procédures SELECT_FILE et OPEN_APPLI
-SP4 build 3
-    Ajout de la gestion des procédures COPY_FILE
-SP4 build 4
-    Améliore COPY_FILE en ajoutant des paramètres
-    Ajout de la gestion des procédures COPY_FILE_AFTER
-SP6
-    Ajout des parametres + modification des SP
-    Ajout de la gestion des concaténations de rtf sans perdre la mise en forme MEMOS
-SP6 Build 1
-    Ajout de la gestion des procédures CREATE_DIR
-    Ajout du champ directory_only dans SELECT_FILE
-    Ajout de fonctionnalités à Params
-    Test d'existence des procédures: évite les erreurs silencieuses
-SP6 Build 2
-    Ajout de laprocedure PARAMS_AFTER
-SP6 Build 3
-    params: Modification du hint: ne s'affiche pas si il commence par $ ou @
-    params: Gestion des actions OK et CANCEL sur overture fiche et pstocke
-SP6 Build 4
-    Ajout de la procedure OUTLOOK
-    Ajout de la procedure PRINT
-SP6 Build 5
-    Ajout d'un champ tempo pour l'ouverture des fiches (SP_LISTE_FICHES)
-SP6 Build 6
-    Ajout de la procedure TXT
-    Gestion de la position de la fenetre
-SP6 Build 6.1
-    Ajout de la fonctin alt pour taille de la fenetre param
-SP6 Build 6.2
-    Correction d'un bug si la procédure params ne retourne pas d'enregistrement (annulation de l'opérateur)
-SP6 Build 7
-    Ajout de la procedure EXCEL
-    Gestion wu WM_Message via la vue vue_todo_type_fiche
-    Traitement de la procédure LOCK
-    Traitement de la procédure NAV
-SP6 Build 8
-    Sur la fenetre param et open appli : si l'appli à lancer n'a pas de chemin alors reprise du chemin de l'exe
-SP6 Build 9
-    Gestion de la connexion sécurisé
-SP6 Build 10
-    Correction su la fene^tre Params, pour valider la saisie sur la sortie du href
-SP6 Build 11
-    Correction sur la gestion des listes déroulantes qui apparaissent derrière
-SP6 Build 12
-
-SP6 Build 13
-    Ajout de la gestion du Fichier_dest dans la SP EXCEL
-    Ajout de la gestion de la mise en forme dans la SP EXCEL
-    Ajout de la gestion de lecture depuis Excel
-
-SP7 Build 0
-    Passage unicode
-    Passage en ADO : attention nécessité d'avoir GX_ODBC.ini paramétré
-    Ajout d'une nouvelle gestion de PRINT avec de nouveaux paramètres ID entre _PRINT et _PRINT_BEFORE
- SP7 Build 1
-   Correction sur fenêtre Param
-SP7 Build 2
-        Correction sur fenêtre Param liste SP
-SP7 Build 3
-        Correction sur la PS READ_EXCEL on passe chemin_Fic au paramètre P2
-        Dans la lecture d'un excel on lit la valeur et non plus la formule
+SP7 Build 13
+        Amélioration de la fonction de listes de fichiers
+                Ajout des informations sur le fichier (table) : [Date_Modif], [Date_Create],[Date_Access],[Extension],[Taille]
+                Posisibilité sélectionner les élements enregistrés : ListeInclude = ? -- 1 = Fichiers / 2 = Fichiers + Rep / 3 = Rep
+SP7 Build 12
+        Correction de la gestion des exports TXT : ATTENTION le retour à la ligne doit être envoyée dans le data, il n'est plus géré par delphi
+        Ajout des paramètre P1 et P2 (en option) sur les PS TXT
+SP7 Build 11
+        Ajout des paramètres @P1 et @P2 optionnel dans les procédures LISTE_FICHES & LISTE_FICHES_BEFORE
+        Correction pour mieux afficher les messages d'erreurs SQL
+SP7 Build 10
+        Ajout d'un paramètres @Nav_Fiche optionnel dans la procédure principale -1 (fiche Pre) +1 (fiche suivante)
+        Correction pour la gestion du lock (mauvais passage du handle)
+SP7 Build 9
+       Correction import excel : lecture repertoire avec Msg erreur
+       Correction de deplacement de fichier en fin de procedure ?
+SP7 Build 8
+        Ajout des paramètres optionnels @Choix_Before_Principal dans les procédure _PRINT_MAIL et _PRIN_MAIL_BEFORE
+        Ajout des paramètres optionnels @P1 et @P2 dans la Procedure Before Principal
+SP7 Build 7
+        Gestion des nouveaux icones
+SP7 Build 6
+        Correction pour firedac 32 / 64 bits
+SP7 Build 5
+        Correction pour l'enregistrement de fichier excel utilisation d'un format normal afin d'éviter les pertes des macros et autres...
+        Passage au firedac
+        Correction de la longueur des string de Param
 SP7 Build 4
         Gestion d'un ID_Session : Si $ID_Session$ est présent dans @P1 ou @P2 il est remplacé par un ID
         Pour la lecture de fichiers excels on ouvre la possibilité d'inclure les sous dossiers
         Ajout d'une procedure pour lister les fichiers d'un repertoire : LISTE_FICHIERS
         Correction du message de retour en ainsistring
-SP7 Build 5
-        Correction pour l'enregistrement de fichier excel utilisation d'un format normal afin d'éviter les pertes des macros et autres...
-        Passage au firedac
-        Correction de la longueur des string de Param
-SP7 Build 6
-        Correction pour firedac 32 / 64 bits
-SP7 Build 7
-        Gestion des nouveaux icones
-SP7 Build 8
-        Ajout des paramètres optionnels @Choix_Before_Principal dans les procédure _PRINT_MAIL et _PRIN_MAIL_BEFORE
-        Ajout des paramètres optionnels @P1 et @P2 dans la Procedure Before Principal
-SP7 Build 9
-       Correction import excel : lecture repertoire avec Msg erreur
-       Correction de deplacement de fichier en fin de procedure ?
-SP7 Build 10
-        Ajout d'un paramètres @Nav_Fiche optionnel dans la procédure principale -1 (fiche Pre) +1 (fiche suivante)
-        Correction pour la gestion du lock (mauvais passage du handle)
-SP7 Build 11
-        Ajout des paramètres @P1 et @P2 optionnel dans les procédures LISTE_FICHES & LISTE_FICHES_BEFORE
-        Correction pour mieux afficher les messages d'erreurs SQL
-SP7 Build 12
-        Correction de la gestion des exports TXT : ATTENTION le retour à la ligne doit être envoyée dans le data, il n'est plus géré par delphi
-        Ajout des paramètre P1 et P2 (en option) sur les PS TXT
+SP7 Build 3
+        Correction sur la PS READ_EXCEL on passe chemin_Fic au paramètre P2
+        Dans la lecture d'un excel on lit la valeur et non plus la formule
+SP7 Build 2
+        Correction sur fenêtre Param liste SP
+SP7 Build 1
+   Correction sur fenêtre Param
+SP7 Build 0
+    Passage unicode
+    Passage en ADO : attention nécessité d'avoir GX_ODBC.ini paramétré
+    Ajout d'une nouvelle gestion de PRINT avec de nouveaux paramètres ID entre _PRINT et _PRINT_BEFORE
+SP6 Build 13
+    Ajout de la gestion du Fichier_dest dans la SP EXCEL
+    Ajout de la gestion de la mise en forme dans la SP EXCEL
+    Ajout de la gestion de lecture depuis Excel
+SP6 Build 12
+SP6 Build 11
+    Correction sur la gestion des listes déroulantes qui apparaissent derrière
+SP6 Build 10
+    Correction su la fene^tre Params, pour valider la saisie sur la sortie du href
+SP6 Build 9
+    Gestion de la connexion sécurisé
+SP6 Build 8
+    Sur la fenetre param et open appli : si l'appli à lancer n'a pas de chemin alors reprise du chemin de l'exe
+SP6 Build 7
+    Ajout de la procedure EXCEL
+    Gestion wu WM_Message via la vue vue_todo_type_fiche
+    Traitement de la procédure LOCK
+    Traitement de la procédure NAV
+SP6 Build 6.2
+    Correction d'un bug si la procédure params ne retourne pas d'enregistrement (annulation de l'opérateur)
+SP6 Build 6.1
+    Ajout de la fonctin alt pour taille de la fenetre param
+SP6 Build 6
+    Ajout de la procedure TXT
+    Gestion de la position de la fenetre
+SP6 Build 5
+    Ajout d'un champ tempo pour l'ouverture des fiches (SP_LISTE_FICHES)
+SP6 Build 4
+    Ajout de la procedure OUTLOOK
+    Ajout de la procedure PRINT
+SP6 Build 3
+    params: Modification du hint: ne s'affiche pas si il commence par $ ou @
+    params: Gestion des actions OK et CANCEL sur overture fiche et pstocke
+SP6 Build 2
+    Ajout de laprocedure PARAMS_AFTER
+SP6 Build 1
+    Ajout de la gestion des procédures CREATE_DIR
+    Ajout du champ directory_only dans SELECT_FILE
+    Ajout de fonctionnalités à Params
+    Test d'existence des procédures: évite les erreurs silencieuses
+SP6
+    Ajout des parametres + modification des SP
+    Ajout de la gestion des concaténations de rtf sans perdre la mise en forme MEMOS
+SP4 build 4
+    Améliore COPY_FILE en ajoutant des paramètres
+    Ajout de la gestion des procédures COPY_FILE_AFTER
+SP4 build 3
+    Ajout de la gestion des procédures COPY_FILE
+SP4 build 2
+    Ajout de la gestion des procédures SELECT_FILE et OPEN_APPLI
+
+Taille du main: 105 * 281
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

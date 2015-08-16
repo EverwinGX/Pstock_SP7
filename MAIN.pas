@@ -106,6 +106,7 @@ type
     IconesFiches16PNG: TImageList;
     wq_Exist_Param: TADQuery;
     wq_EXCEL_READ_FIC: TADQuery;
+    SP_AFTER: TADStoredProc;
     procedure BitBtn1Click(Sender: TObject);
 
     procedure AppException(Sender: TObject; E: Exception);
@@ -128,9 +129,9 @@ type
     procedure Fenetre_Position(Fenetre: TForm);
     procedure Read_Excel_Log(Code_Log, Message_Log, Fichier, Feuille: string; N_user: Integer; Cle_Session: string);
     procedure FileSearch(const PathName, Filename: string; const InDir: Boolean; N_user: Integer; Cle_Session: string);
-    procedure FileSearch_FIC(const PathName, Filename: string; const InDir: Boolean; N_user: Integer; Cle_Session: string);
+    procedure FileSearch_FIC(const PathName, Filename: string; const InDir: Boolean; N_user: Integer; Cle_Session: string; ListeInclude: Integer);
     function Param_Exist(Nom_procedure: string; Nom_Parametre: string): Boolean;
-
+    function FileTimeToDateTime(FileTime: TFileTime): TDateTime;
   private
     Find_Fenetre: AnsiString;
     Handle_Fenetre: THandle;
@@ -545,6 +546,7 @@ var
   Read_Excel_Rep_Chemin: string;
   Read_Excel_Rep_Indir: Boolean;
   Read_Excel_Rep_Fichier: string;
+  Read_Excel_Liste_Include: Integer;
   Before_Principal: string;
   Result_Deplacer: Integer;
   Move: Integer;
@@ -1085,8 +1087,17 @@ begin
         begin
           Read_Excel_Rep_Indir := False;
         end;
+        if SP_LISTE_FICHIERS.FindField('ListeInclude') <> nil then
+        begin
 
-        FileSearch_FIC(Read_Excel_Rep_Chemin, Read_Excel_Rep_Fichier, Read_Excel_Rep_Indir, N_user, ID_Session);
+          Read_Excel_Liste_Include := SP_LISTE_FICHIERS.FieldByName('ListeInclude').asinteger;
+        end
+        else
+        begin
+          Read_Excel_Liste_Include := 1;
+        end;
+
+        FileSearch_FIC(Read_Excel_Rep_Chemin, Read_Excel_Rep_Fichier, Read_Excel_Rep_Indir, N_user, ID_Session, Read_Excel_Liste_Include);
         SP_LISTE_FICHIERS.Next;
       end;
 
@@ -4842,6 +4853,97 @@ begin
 
     end;
 
+    // Gestion du message PARAMS_AFTER
+    SP_AFTER.StoredProcName := Nom_procedure + '_AFTER';
+    With SP_AFTER do
+    begin
+      Params.Clear;
+
+      Param := Params.Add;
+      Param.Name := '@RETURN_VALUE';
+      Param.DataType := ftInteger;
+      Param.ParamType := ptResult;
+
+      Param := Params.Add;
+      Param.Name := '@cle';
+      Param.DataType := ftInteger;
+      Param.ParamType := ptInput;
+      Param.Value := cle;
+
+      Param := Params.Add;
+      Param.Name := '@N_User';
+      Param.DataType := ftInteger;
+      Param.ParamType := ptInput;
+      Param.Value := N_user;
+
+      Param := Params.Add;
+      Param.Name := '@P1';
+      Param.DataType := ftString;
+      Param.ParamType := ptInput;
+      Param.Value := P1_Procedure;
+
+      Param := Params.Add;
+      Param.Name := '@P2';
+      Param.DataType := ftString;
+      Param.ParamType := ptInput;
+      if Chemin_Fic <> '' then
+      begin
+        Param.Value := Chemin_Fic;
+      end
+      else
+      begin
+        Param.Value := P2_Procedure;
+      end;
+
+      Param := Params.Add;
+      Param.Name := '@Choix_Before';
+      Param.DataType := ftInteger;
+      Param.ParamType := ptInput;
+      Param.Value := Choix_Entree;
+
+      for j := 0 to 8 do
+      begin
+        Param := Params.Add;
+        Param.Name := '@Param' + inttostr(j);
+        Param.DataType := ftString;
+        Param.ParamType := ptInput;
+        Param.Value := Tab_Params[j];
+      end;
+
+      Param := Params.Add;
+      Param.Name := '@ID_Session';
+      Param.DataType := ftString;
+      Param.ParamType := ptInput;
+      Param.Value := ID_Session;
+
+    end;
+
+
+    try
+      if (Procedure_Exist(Nom_procedure + '_AFTER') = True) then
+      begin
+        SP_AFTER.open;
+
+        if (SP_AFTER.FieldByName('Msg').Asstring <> '') then
+        begin
+          Choix_Entree := Application.MessageBox(PChar(SP_AFTER.FieldByName('Msg').Asstring), PChar(SP_AFTER.FieldByName('Caption').Asstring), SP_AFTER.FieldByName('Flags').asinteger + MB_TOPMOST);
+        end;
+        if (SP_AFTER.FieldByName('Result').asinteger <> 1) then
+        begin
+          SP_AFTER.close;
+          Fin_Appli;
+          Exit;
+        end;
+        SP_AFTER.close;
+      end;
+    except
+      Application.HandleException(Self);
+      SP_AFTER.close;
+      Fin_Appli;
+      Exit;
+    end;
+
+
     // Fermeture
 
     // Si un message alors affichage du message
@@ -5152,21 +5254,79 @@ begin
   fcLabel1.Caption := AdvEdit2.Text;
 end;
 
-procedure TForm1.FileSearch_FIC(const PathName, Filename: string; const InDir: Boolean; N_user: Integer; Cle_Session: string);
+procedure TForm1.FileSearch_FIC(const PathName, Filename: string; const InDir: Boolean; N_user: Integer; Cle_Session: string; ListeInclude: Integer);
 var
   Rec: TSearchRec;
   Path: string;
+  Attribut: Integer;
 begin
   Path := IncludeTrailingBackslash(PathName);
-  if FindFirst(Path + Filename, faAnyFile - faDirectory, Rec) = 0 then
+
+  if ListeInclude = 1 then
+  begin
+    Attribut := faAnyFile - faDirectory;
+  end;
+
+  if ListeInclude = 2 then
+  begin
+    Attribut := faAnyFile;
+  end;
+
+  if ListeInclude = 3 then
+  begin
+    Attribut := faDirectory - faAnyFile;
+  end;
+
+  if FindFirst(Path + Filename, Attribut, Rec) = 0 then
     try
       repeat
-        wq_LISTE_FICHIERS.Append;
-        wq_LISTE_FICHIERS.FieldByName('N_user').asinteger := N_user;
-        wq_LISTE_FICHIERS.FieldByName('ID_Session').AsAnsiString := Cle_Session;
-        wq_LISTE_FICHIERS.FieldByName('Repertoire').AsAnsiString := Path;
-        wq_LISTE_FICHIERS.FieldByName('Fichier').AsAnsiString := Rec.Name;
-        wq_LISTE_FICHIERS.post;
+        if ((Rec.Attr and faDirectory) <> 0) and (Rec.Name <> '.') and (Rec.Name <> '..') and ((ListeInclude = 1) or (ListeInclude = 2)) then
+        begin
+          wq_LISTE_FICHIERS.Append;
+          wq_LISTE_FICHIERS.FieldByName('N_user').asinteger := N_user;
+          wq_LISTE_FICHIERS.FieldByName('ID_Session').AsAnsiString := Cle_Session;
+          wq_LISTE_FICHIERS.FieldByName('Repertoire').AsAnsiString := Path;
+          wq_LISTE_FICHIERS.FieldByName('Fichier').AsAnsiString := Rec.Name;
+          if wq_LISTE_FICHIERS.FindField('Date_Log') <> nil then
+            wq_LISTE_FICHIERS.FieldByName('Date_Log').AsDateTime := now;
+
+          if wq_LISTE_FICHIERS.FindField('Date_Modif') <> nil then
+            wq_LISTE_FICHIERS.FieldByName('Date_Modif').AsDateTime := FileTimeToDateTime(Rec.FindData.ftLastWriteTime);
+          if wq_LISTE_FICHIERS.FindField('Date_Create') <> nil then
+            wq_LISTE_FICHIERS.FieldByName('Date_Create').AsDateTime := FileTimeToDateTime(Rec.FindData.ftCreationTime);
+          if wq_LISTE_FICHIERS.FindField('Date_Access') <> nil then
+            wq_LISTE_FICHIERS.FieldByName('Date_Access').AsDateTime := FileTimeToDateTime(Rec.FindData.ftLastAccessTime);
+          if wq_LISTE_FICHIERS.FindField('Taille') <> nil then
+            wq_LISTE_FICHIERS.FieldByName('Taille').AsLargeInt := Rec.size;
+          if wq_LISTE_FICHIERS.FindField('Extension') <> nil then
+            wq_LISTE_FICHIERS.FieldByName('Extension').AsAnsiString := ExtractFileExt(Rec.Name);
+
+          wq_LISTE_FICHIERS.post;
+        end;
+
+        if (((Rec.Attr and faDirectory) > 0) Or (Rec.Name = '.') Or (Rec.Name = '..')) and ((ListeInclude = 2) or (ListeInclude = 3)) then
+        begin
+          wq_LISTE_FICHIERS.Append;
+          wq_LISTE_FICHIERS.FieldByName('N_user').asinteger := N_user;
+          wq_LISTE_FICHIERS.FieldByName('ID_Session').AsAnsiString := Cle_Session;
+          wq_LISTE_FICHIERS.FieldByName('Repertoire').AsAnsiString := Path;
+          wq_LISTE_FICHIERS.FieldByName('Fichier').AsAnsiString := Rec.Name;
+          if wq_LISTE_FICHIERS.FindField('Date_Log') <> nil then
+            wq_LISTE_FICHIERS.FieldByName('Date_Log').AsDateTime := now;
+
+          if wq_LISTE_FICHIERS.FindField('Date_Modif') <> nil then
+            wq_LISTE_FICHIERS.FieldByName('Date_Modif').AsDateTime := FileTimeToDateTime(Rec.FindData.ftLastWriteTime);
+          if wq_LISTE_FICHIERS.FindField('Date_Create') <> nil then
+            wq_LISTE_FICHIERS.FieldByName('Date_Create').AsDateTime := FileTimeToDateTime(Rec.FindData.ftCreationTime);
+          if wq_LISTE_FICHIERS.FindField('Date_Access') <> nil then
+            wq_LISTE_FICHIERS.FieldByName('Date_Access').AsDateTime := FileTimeToDateTime(Rec.FindData.ftLastAccessTime);
+          if wq_LISTE_FICHIERS.FindField('Taille') <> nil then
+            wq_LISTE_FICHIERS.FieldByName('Taille').AsLargeInt := Rec.size;
+          if wq_LISTE_FICHIERS.FindField('Extension') <> nil then
+            wq_LISTE_FICHIERS.FieldByName('Extension').AsAnsiString := ExtractFileExt(Rec.Name);
+
+          wq_LISTE_FICHIERS.post;
+        end;
 
       until FindNext(Rec) <> 0;
     finally
@@ -5180,11 +5340,28 @@ begin
     try
       repeat
         if ((Rec.Attr and faDirectory) <> 0) and (Rec.Name <> '.') and (Rec.Name <> '..') then
-          FileSearch_FIC(Path + Rec.Name, Filename, True, N_user, Cle_Session);
+          FileSearch_FIC(Path + Rec.Name, Filename, True, N_user, Cle_Session, ListeInclude);
       until FindNext(Rec) <> 0;
     finally
       FindClose(Rec);
     end;
+end;
+
+function TForm1.FileTimeToDateTime(FileTime: TFileTime): TDateTime;
+var
+  ModifiedTime: TFileTime;
+  SystemTime: TSystemTime;
+begin
+  Result := 0;
+  if (FileTime.dwLowDateTime = 0) and (FileTime.dwHighDateTime = 0) then
+    Exit;
+  try
+    FileTimeToLocalFileTime(FileTime, ModifiedTime);
+    FileTimeToSystemTime(ModifiedTime, SystemTime);
+    Result := SystemTimeToDateTime(SystemTime);
+  except
+    Result := now; // Something to return in case of error
+  end;
 end;
 
 procedure TForm1.FileSearch(const PathName, Filename: string; const InDir: Boolean; N_user: Integer; Cle_Session: string);
@@ -5232,7 +5409,7 @@ begin
   wq_EXCEL_READ_LOG.FieldByName('Feuille').AsAnsiString := Feuille;
   wq_EXCEL_READ_LOG.FieldByName('Code_Log').AsAnsiString := Code_Log;
   wq_EXCEL_READ_LOG.FieldByName('Message_Log').AsAnsiString := Message_Log;
-  wq_EXCEL_READ_LOG.FieldByName('Date_Log').asdatetime := now;
+  wq_EXCEL_READ_LOG.FieldByName('Date_Log').AsDateTime := now;
   wq_EXCEL_READ_LOG.post;
 
 end;
