@@ -72,3 +72,5 @@ SP7 Build 5
         Correction pour l'enregistrement de fichier excel utilisation d'un format normal afin d'éviter les pertes des macros et autres...
         Passage au firedac
         Correction de la longueur des string de Param
+SP7 Build 6
+        Correction pour firedac 32 / 64 bits
