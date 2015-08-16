@@ -63,3 +63,8 @@ SP7 Build 2
 SP7 Build 3
         Correction sur la PS READ_EXCEL on passe chemin_Fic au paramètre P2
         Dans la lecture d'un excel on lit la valeur et non plus la formule
+SP7 Build 4
+        Gestion d'un ID_Session : Si $ID_Session$ est présent dans @P1 ou @P2 il est remplacé par un ID
+        Pour la lecture de fichiers excels on ouvre la possibilité d'inclure les sous dossiers
+        Ajout d'une procedure pour lister les fichiers d'un repertoire : LISTE_FICHIERS
+        Correction du message de retour en ainsistring

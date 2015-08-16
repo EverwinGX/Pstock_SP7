@@ -96,6 +96,11 @@ type
     wq_EXCEL_READ_TAB: TADOQuery;
     ADODataSet1: TADODataSet;
     ADODataSet2: TADODataSet;
+    wq_Session0: TwwQuery;
+    wq_Session0ID: TStringField;
+    SP_LISTE_FICHIERS: TADOStoredProc;
+    wq_LISTE_FICHIERS: TADOQuery;
+    wq_Session: TADOQuery;
     procedure BitBtn1Click(Sender: TObject);
 
     procedure AppException(Sender: TObject; E: Exception);
@@ -115,18 +120,20 @@ type
     function Procedure_Exist(Nom_procedure: string): Boolean;
     procedure AdvEdit2Change(Sender: TObject);
     procedure Fenetre_Position(Fenetre: TForm);
-    procedure Fichiers_Rep(Source: string; N_user: Integer; Cle_Session: string);
     procedure Read_Excel_Log(Code_Log, Message_Log, Fichier, Feuille: string; N_user: Integer; Cle_Session: string);
+    procedure FileSearch(const PathName, Filename: string; const InDir: Boolean; N_user: Integer; Cle_Session: string);
+    procedure FileSearch_FIC(const PathName, Filename: string; const InDir: Boolean; N_user: Integer; Cle_Session: string);
+
   private
     Find_Fenetre: AnsiString;
     Handle_Fenetre: THandle;
 
-    msgreussite, msgerreur: AnsiString;
+    msgreussite, msgerreur: String;
     Ouverture_Fiche: Integer;
     Type_Fiche: Integer;
     N_fiche: Integer;
     Refresh: Integer;
-    Nom_Fenetre: AnsiString;
+    Nom_Fenetre: String;
     Plusieurs_Fiches: Integer;
     N_Wait, N_Visible, N_Refresh, WM_OPEN: Integer;
     choix: Integer;
@@ -138,15 +145,16 @@ type
     Tab_Params: array [0 .. 9] of AnsiString;
     HandleGeneMail: Integer;
     First_active: Boolean;
-    Nom_Societe: AnsiString;
-    Nom_Fenetre_Genesys: AnsiString;
+    Nom_Societe: String;
+    Nom_Fenetre_Genesys: String;
 
-    User: AnsiString;
+    User: String;
 
     Timer: Integer;
 
     { Déclarations publiques }
     Olexls: Variant;
+    ID_Session : String;
   public
     IsQuitter: Boolean;
     Nom_procedure: AnsiString;
@@ -349,6 +357,7 @@ begin
     ThreadSP := nil;
     ThreadSPinfo := nil;
 
+
     // *************************************************************
     // ATTENTION
     // Récupération de handle de Genesys en fonction de l'utilisateur
@@ -370,13 +379,10 @@ begin
     begin
       Chaine_Connexion := iniFile.ReadString(Db, 'Connexion_Windows', '');
     end;
-    Chaine_Connexion := stringreplace(Chaine_Connexion, '$PASSWORD$', Cryptage1.getPassword,
-      [rfReplaceAll, rfIgnoreCase]);
+    Chaine_Connexion := stringreplace(Chaine_Connexion, '$PASSWORD$', Cryptage1.getPassword, [rfReplaceAll, rfIgnoreCase]);
     Chaine_Connexion := stringreplace(Chaine_Connexion, '$USER$', Cryptage1.GetLogin, [rfReplaceAll, rfIgnoreCase]);
-    Chaine_Connexion := stringreplace(Chaine_Connexion, '$SERVEUR$', iniFile.ReadString(Db, 'Serveur', ''),
-      [rfReplaceAll, rfIgnoreCase]);
-    Chaine_Connexion := stringreplace(Chaine_Connexion, '$BASE$', iniFile.ReadString(Db, 'base', ''),
-      [rfReplaceAll, rfIgnoreCase]);
+    Chaine_Connexion := stringreplace(Chaine_Connexion, '$SERVEUR$', iniFile.ReadString(Db, 'Serveur', ''), [rfReplaceAll, rfIgnoreCase]);
+    Chaine_Connexion := stringreplace(Chaine_Connexion, '$BASE$', iniFile.ReadString(Db, 'base', ''), [rfReplaceAll, rfIgnoreCase]);
 
 
     // Reconstruction de la chaine de connexion
@@ -384,22 +390,40 @@ begin
     Database.ConnectionString := Chaine_Connexion;
     iniFile.Free;
     Try
-      Database.Open;
+      Database.open;
     except
       Application.HandleException(Self);
       Fin_Appli;
     End;
-    wq_GETINIT.Open;
+
+    // ****************
+    // ID de session
+    // ****************
+    wq_Session.open;
+    ID_Session:=wq_Session.FieldByName('ID').AsAnsiString;
+    wq_Session.Close;
+    if Pos('$ID_SESSION$', uppercase(P1_Procedure)) > 0 then
+    begin
+      P1_Procedure := stringreplace(P1_Procedure, '$ID_SESSION$', ID_Session, [rfReplaceAll, rfIgnoreCase]);
+    end;
+    if Pos('$ID_SESSION$', uppercase(P2_Procedure)) > 0 then
+    begin
+      P2_Procedure := stringreplace(P2_Procedure, '$ID_SESSION$', ID_Session, [rfReplaceAll, rfIgnoreCase]);
+    end;
+
+
+
+    wq_GETINIT.open;
 
     if N_user > 0 then
     begin
-      wq_GETINIT.Open;
-      Nom_Societe := wq_GETINIT.fieldbyname('Nom_societe').AsAnsiString;
+      wq_GETINIT.open;
+      Nom_Societe := wq_GETINIT.FieldByName('Nom_societe').AsAnsiString;
       wq_GETINIT.close;
       QueryGetUser.close;
       QueryGetUser.Parameters.ParamByName('N_user').Value := N_user;
-      QueryGetUser.Open;
-      User := lowercase(QueryGetUser.fieldbyname('Login').AsAnsiString);
+      QueryGetUser.open;
+      User := lowercase(QueryGetUser.FieldByName('Login').AsAnsiString);
       // QueryGetUser.close;
       Nom_Fenetre_Genesys := 'GENESYS - ' + Nom_Societe + ' - ' + User;
       Handle_Genesys := findwindow(nil, PChar(Nom_Fenetre_Genesys));
@@ -414,8 +438,7 @@ begin
 
     end;
 
-    SetWindowLong(Application.Handle, GWL_EXSTYLE, GetWindowLong(Application.Handle,
-        GWL_EXSTYLE) and not WS_EX_APPWINDOW or WS_EX_TOOLWINDOW);
+    SetWindowLong(Application.Handle, GWL_EXSTYLE, GetWindowLong(Application.Handle, GWL_EXSTYLE) and not WS_EX_APPWINDOW or WS_EX_TOOLWINDOW);
   except
     Application.HandleException(Self);
   end;
@@ -518,7 +541,13 @@ var
   Result_Move: longbool;
   Param: Tparameter;
   Print_ID: string;
-label Suite;
+
+  Read_Excel_Rep_Chemin: string;
+  Read_Excel_Rep_Indir: Boolean;
+  Read_Excel_Rep_Fichier: string;
+
+label
+  Suite;
 begin
   if (encours = True) or (IsQuitter = True) then
     exit;
@@ -541,7 +570,7 @@ begin
     try
       wq_Exist.close;
       wq_Exist.SQL[5] := 'AND NAME LIKE ' + quotedstr(Nom_procedure + '%');
-      wq_Exist.Open;
+      wq_Exist.open;
     except
       Application.HandleException(Self);
       Fin_Appli;
@@ -575,14 +604,13 @@ begin
     try
       if (Procedure_Exist(Nom_procedure + '_BEFORE') = True) then
       begin
-        SP_BEFORE.Open;
+        SP_BEFORE.open;
 
-        if (SP_BEFORE.fieldbyname('Msg').Asstring <> '') then
+        if (SP_BEFORE.FieldByName('Msg').Asstring <> '') then
         begin
-          Choix_Entree := Application.MessageBox(PChar(SP_BEFORE.fieldbyname('Msg').Asstring),
-            PChar(SP_BEFORE.fieldbyname('Caption').Asstring), SP_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+          Choix_Entree := Application.MessageBox(PChar(SP_BEFORE.FieldByName('Msg').Asstring), PChar(SP_BEFORE.FieldByName('Caption').Asstring), SP_BEFORE.FieldByName('Flags').Asinteger + MB_TOPMOST);
         end;
-        if (SP_BEFORE.fieldbyname('Result').Asinteger <> 1) then
+        if (SP_BEFORE.FieldByName('Result').Asinteger <> 1) then
         begin
           SP_BEFORE.close;
           Fin_Appli;
@@ -640,7 +668,7 @@ begin
     if (Procedure_Exist(Nom_procedure + '_PARAMS') = True) then
     begin
       try
-        SP_PARAM.Open;
+        SP_PARAM.open;
       except
         ;
       end;
@@ -662,7 +690,7 @@ begin
             Param_Top_Most := 0;
 
             if SP_PARAM.FindField('Top_Most') <> nil then
-              Param_Top_Most := SP_PARAM.fieldbyname('Top_Most').Asinteger;
+              Param_Top_Most := SP_PARAM.FieldByName('Top_Most').Asinteger;
 
             F_Params := TF_params.Create(Self);
             HandleGeneMail := F_Params.Handle;
@@ -672,7 +700,7 @@ begin
             F_Params.Timer := 0;
 
             if SP_PARAM.FindField('Timer') <> nil then
-              F_Params.Timer := SP_PARAM.fieldbyname('Timer').Asinteger;
+              F_Params.Timer := SP_PARAM.FieldByName('Timer').Asinteger;
 
             F_Params.Init;
 
@@ -772,15 +800,13 @@ begin
     try
       if (Procedure_Exist(Nom_procedure + '_PARAMS_AFTER') = True) then
       begin
-        SP_PARAM_AFTER.Open;
+        SP_PARAM_AFTER.open;
 
-        if (SP_PARAM_AFTER.fieldbyname('Msg').Asstring <> '') then
+        if (SP_PARAM_AFTER.FieldByName('Msg').Asstring <> '') then
         begin
-          Choix_Entree := Application.MessageBox(PChar(SP_PARAM_AFTER.fieldbyname('Msg').Asstring),
-            PChar(SP_PARAM_AFTER.fieldbyname('Caption').Asstring),
-            SP_PARAM_AFTER.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+          Choix_Entree := Application.MessageBox(PChar(SP_PARAM_AFTER.FieldByName('Msg').Asstring), PChar(SP_PARAM_AFTER.FieldByName('Caption').Asstring), SP_PARAM_AFTER.FieldByName('Flags').Asinteger + MB_TOPMOST);
         end;
-        if (SP_PARAM_AFTER.fieldbyname('Result').Asinteger <> 1) then
+        if (SP_PARAM_AFTER.FieldByName('Result').Asinteger <> 1) then
         begin
           SP_PARAM_AFTER.close;
           Fin_Appli;
@@ -837,45 +863,45 @@ begin
       if (Procedure_Exist(Nom_procedure + '_SELECT_FILE') = True) then
       begin
 
-        SP_FICHIER.Open;
+        SP_FICHIER.open;
 
-        if (SP_FICHIER.fieldbyname('Title').AsAnsiString <> '') then
+        if (SP_FICHIER.FieldByName('Title').AsAnsiString <> '') then
         begin
           // gestion de la selection d'un repertoire uniquement
           Directory_Only := 0;
 
           if SP_FICHIER.FindField('Directory_Only') <> nil then
-            Directory_Only := SP_FICHIER.fieldbyname('Directory_Only').Asinteger;
+            Directory_Only := SP_FICHIER.FieldByName('Directory_Only').Asinteger;
 
           if Directory_Only = 0 then
           begin
-            OpenDlg.DefaultExt := SP_FICHIER.fieldbyname('DefaultExt').AsAnsiString;
-            OpenDlg.Filter := SP_FICHIER.fieldbyname('Filter').AsAnsiString;
-            OpenDlg.InitialDir := SP_FICHIER.fieldbyname('InitialDir').AsAnsiString;
-            OpenDlg.Title := SP_FICHIER.fieldbyname('Title').AsAnsiString;
-            OpenDlg.Filename := SP_FICHIER.fieldbyname('FileName').AsAnsiString;
+            OpenDlg.DefaultExt := SP_FICHIER.FieldByName('DefaultExt').AsAnsiString;
+            OpenDlg.Filter := SP_FICHIER.FieldByName('Filter').AsAnsiString;
+            OpenDlg.InitialDir := SP_FICHIER.FieldByName('InitialDir').AsAnsiString;
+            OpenDlg.Title := SP_FICHIER.FieldByName('Title').AsAnsiString;
+            OpenDlg.Filename := SP_FICHIER.FieldByName('FileName').AsAnsiString;
 
-            if SP_FICHIER.fieldbyname('HideReadOnly').Asinteger = 0 then
+            if SP_FICHIER.FieldByName('HideReadOnly').Asinteger = 0 then
               OpenDlg.Options := OpenDlg.Options - [ofHideReadOnly]
             else
               OpenDlg.Options := OpenDlg.Options + [ofHideReadOnly];
 
-            if SP_FICHIER.fieldbyname('AllowMultiSelect').Asinteger = 0 then
+            if SP_FICHIER.FieldByName('AllowMultiSelect').Asinteger = 0 then
               OpenDlg.Options := OpenDlg.Options - [ofAllowMultiSelect]
             else
               OpenDlg.Options := OpenDlg.Options + [ofAllowMultiSelect];
 
-            if SP_FICHIER.fieldbyname('NoChangeDir').Asinteger = 0 then
+            if SP_FICHIER.FieldByName('NoChangeDir').Asinteger = 0 then
               OpenDlg.Options := OpenDlg.Options - [ofNoChangeDir]
             else
               OpenDlg.Options := OpenDlg.Options + [ofNoChangeDir];
 
-            if SP_FICHIER.fieldbyname('PathMustExist').Asinteger = 0 then
+            if SP_FICHIER.FieldByName('PathMustExist').Asinteger = 0 then
               OpenDlg.Options := OpenDlg.Options - [ofPathMustExist]
             else
               OpenDlg.Options := OpenDlg.Options + [ofPathMustExist];
 
-            if SP_FICHIER.fieldbyname('FileMustExist').Asinteger = 0 then
+            if SP_FICHIER.FieldByName('FileMustExist').Asinteger = 0 then
               OpenDlg.Options := OpenDlg.Options - [ofFileMustExist]
             else
               OpenDlg.Options := OpenDlg.Options + [ofFileMustExist];
@@ -907,8 +933,7 @@ begin
             end
             else
             begin
-              Chemin_Fic := BrowseforFile(Handle, SP_FICHIER.fieldbyname('Title').AsAnsiString,
-                SP_FICHIER.fieldbyname('InitialDir').AsAnsiString);
+              Chemin_Fic := BrowseforFile(Handle, SP_FICHIER.FieldByName('Title').AsAnsiString, SP_FICHIER.FieldByName('InitialDir').AsAnsiString);
 
               if (Chemin_Fic = '') then
               begin
@@ -934,6 +959,110 @@ begin
       SP_FICHIER.close;
       Fin_Appli;
       exit;
+    end;
+
+    // Récupères les fichiers à traiter
+    if (Procedure_Exist(Nom_procedure + '_LISTE_FICHIERS') = True) then
+    begin
+      SP_LISTE_FICHIERS.ProcedureName := Nom_procedure + '_LISTE_FICHIERS';
+      With SP_LISTE_FICHIERS do
+      begin
+        Parameters.Clear;
+
+        Param := Parameters.AddParameter;
+        Param.Name := '@RETURN_VALUE';
+        Param.DataType := ftInteger;
+        Param.Direction := pdReturnValue;
+
+        Param := Parameters.AddParameter;
+        Param.Name := '@cle';
+        Param.DataType := ftInteger;
+        Param.Direction := pdInput;
+        Param.Value := cle;
+
+        Param := Parameters.AddParameter;
+        Param.Name := '@N_User';
+        Param.DataType := ftInteger;
+        Param.Direction := pdInput;
+        Param.Value := N_user;
+
+        Param := Parameters.AddParameter;
+        Param.Name := '@P1';
+        Param.DataType := ftWideString;
+        Param.Direction := pdInput;
+        Param.Value := P1_Procedure;
+
+        Param := Parameters.AddParameter;
+        Param.Name := '@P2';
+        Param.DataType := ftWideString;
+        Param.Direction := pdInput;
+        if Chemin_Fic <> '' then
+        begin
+          Param.Value := Chemin_Fic;
+        end
+        else
+        begin
+          Param.Value := P2_Procedure;
+        end;
+
+        for j := 0 to 8 do
+        begin
+          Param := Parameters.AddParameter;
+          Param.Name := '@Param' + inttostr(j);
+          Param.DataType := ftWideString;
+          Param.Direction := pdInput;
+          Param.Value := Tab_Params[j];
+        end;
+
+        Param := Parameters.AddParameter;
+        Param.Name := '@ID_Session';
+        Param.DataType := ftWideString;
+        Param.Direction := pdInput;
+        Param.Value := ID_Session;
+
+      end;
+
+      SP_LISTE_FICHIERS.open;
+      SP_LISTE_FICHIERS.first;
+
+      wq_LISTE_FICHIERS.close;
+      wq_LISTE_FICHIERS.SQL.Clear;
+      wq_LISTE_FICHIERS.SQL.Add('SELECT * FROM ' + stringreplace(Nom_procedure, '_SP_', '_TB_', [rfReplaceAll, rfIgnoreCase]) + '_LISTE_FICHIERS');
+      wq_LISTE_FICHIERS.open;
+
+      while not SP_LISTE_FICHIERS.Eof do
+      begin
+        Read_Excel_Rep_Chemin := SP_LISTE_FICHIERS.FieldByName('Repertoire').AsAnsiString;
+        if SP_LISTE_FICHIERS.FindField('Fichier') <> nil then
+        begin
+          Read_Excel_Rep_Fichier := SP_LISTE_FICHIERS.FieldByName('Fichier').AsAnsiString;
+        end
+        else
+        begin
+          Read_Excel_Rep_Fichier := '*.*';
+        end;
+        if SP_LISTE_FICHIERS.FindField('Indir') <> nil then
+        begin
+          if SP_LISTE_FICHIERS.FieldByName('Indir').AsAnsiString = 'Oui' then
+          begin
+            Read_Excel_Rep_Indir := True;
+          end
+          else
+          begin
+            Read_Excel_Rep_Indir := False;
+          end;
+        end
+        else
+        begin
+          Read_Excel_Rep_Indir := False;
+        end;
+
+        FileSearch_FIC(Read_Excel_Rep_Chemin, Read_Excel_Rep_Fichier, Read_Excel_Rep_Indir, N_user, ID_Session);
+        SP_LISTE_FICHIERS.Next;
+      end;
+
+      SP_LISTE_FICHIERS.close;
+      wq_LISTE_FICHIERS.close;
     end;
 
     // Lance la copie de fichiers
@@ -1011,16 +1140,14 @@ begin
     try
       if (Procedure_Exist(Nom_procedure + '_COPY_FILE_BEFORE') = True) then
       begin
-        SP_COPY_FILE_BEFORE.Open;
+        SP_COPY_FILE_BEFORE.open;
 
-        if (SP_COPY_FILE_BEFORE.fieldbyname('Msg').Asstring <> '') then
+        if (SP_COPY_FILE_BEFORE.FieldByName('Msg').Asstring <> '') then
         begin
-          choix := Application.MessageBox(PChar(SP_COPY_FILE_BEFORE.fieldbyname('Msg').Asstring),
-            PChar(SP_COPY_FILE_BEFORE.fieldbyname('Caption').Asstring),
-            SP_COPY_FILE_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+          choix := Application.MessageBox(PChar(SP_COPY_FILE_BEFORE.FieldByName('Msg').Asstring), PChar(SP_COPY_FILE_BEFORE.FieldByName('Caption').Asstring), SP_COPY_FILE_BEFORE.FieldByName('Flags').Asinteger + MB_TOPMOST);
         end;
 
-        if (SP_COPY_FILE_BEFORE.fieldbyname('Result').Asinteger <> 1) then
+        if (SP_COPY_FILE_BEFORE.FieldByName('Result').Asinteger <> 1) then
         begin
           SP_COPY_FILE_BEFORE.close;
           Fin_Appli;
@@ -1267,21 +1394,21 @@ begin
 
       if (Procedure_Exist(Nom_procedure + '_CREATE_DIR') = True) then
       begin
-        SP_CREATE_DIR.Open;
+        SP_CREATE_DIR.open;
 
         while (not SP_CREATE_DIR.Eof) do
         begin
-          if SP_CREATE_DIR.fieldbyname('Directory').AsAnsiString <> '' then
+          if SP_CREATE_DIR.FieldByName('Directory').AsAnsiString <> '' then
           begin
-            if not DirectoryExists(SP_CREATE_DIR.fieldbyname('Directory').AsAnsiString) then
+            if not DirectoryExists(SP_CREATE_DIR.FieldByName('Directory').AsAnsiString) then
             begin
-              if SP_CREATE_DIR.fieldbyname('Force_Dir').Asinteger = 1 then
+              if SP_CREATE_DIR.FieldByName('Force_Dir').Asinteger = 1 then
               begin
-                ForceDirectories(SP_CREATE_DIR.fieldbyname('Directory').AsAnsiString);
+                ForceDirectories(SP_CREATE_DIR.FieldByName('Directory').AsAnsiString);
               end
               else
               begin
-                CreateDir(SP_CREATE_DIR.fieldbyname('Directory').AsAnsiString);
+                CreateDir(SP_CREATE_DIR.FieldByName('Directory').AsAnsiString);
               end;
             end;
           end;
@@ -1302,7 +1429,7 @@ begin
     try
       if (Procedure_Exist(Nom_procedure + '_COPY_FILE') = True) then
       begin
-        SP_COPY_FILE.Open;
+        SP_COPY_FILE.open;
 
         try
           SetWindowPos(HWND(Form1.Handle), // handle of window
@@ -1318,17 +1445,16 @@ begin
 
           while (not SP_COPY_FILE.Eof) do
           begin
-            Chemin_Fic := SP_COPY_FILE.fieldbyname('Source').AsAnsiString;
-            Chemin_dest := SP_COPY_FILE.fieldbyname('Destination').AsAnsiString;
+            Chemin_Fic := SP_COPY_FILE.FieldByName('Source').AsAnsiString;
+            Chemin_dest := SP_COPY_FILE.FieldByName('Destination').AsAnsiString;
 
-            if SP_COPY_FILE.fieldbyname('Fonction').AsAnsiString <> '' then
+            if SP_COPY_FILE.FieldByName('Fonction').AsAnsiString <> '' then
             begin
               Resultat_copie := copier(Form1.Handle, Chemin_Fic, Chemin_dest);
 
               SP_COPY_FILE_AFTER.Parameters.ParamByName('@Cle').Value := cle;
               SP_COPY_FILE_AFTER.Parameters.ParamByName('@N_User').Value := N_user;
-              SP_COPY_FILE_AFTER.Parameters.ParamByName('@Fonction').Value := SP_COPY_FILE.fieldbyname('Fonction')
-                  .Value;
+              SP_COPY_FILE_AFTER.Parameters.ParamByName('@Fonction').Value := SP_COPY_FILE.FieldByName('Fonction').Value;
               SP_COPY_FILE_AFTER.Parameters.ParamByName('@FileS_Name').Value := ExtractFileName(Chemin_Fic);
               SP_COPY_FILE_AFTER.Parameters.ParamByName('@FileS_Dir').Value := ExtractFileDir(Chemin_Fic);
               SP_COPY_FILE_AFTER.Parameters.ParamByName('@FileS').Value := Chemin_Fic;
@@ -1385,21 +1511,18 @@ begin
     begin
       wq_EXCEL_READ_LOG.close;
       wq_EXCEL_READ_LOG.SQL.Clear;
-      wq_EXCEL_READ_LOG.SQL.Add('SELECT * FROM ' + stringreplace(Nom_procedure, '_SP_', '_TB_',
-          [rfReplaceAll, rfIgnoreCase]) + '_READ_XLS_LOG');
-      wq_EXCEL_READ_LOG.Open;
+      wq_EXCEL_READ_LOG.SQL.Add('SELECT * FROM ' + stringreplace(Nom_procedure, '_SP_', '_TB_', [rfReplaceAll, rfIgnoreCase]) + '_READ_XLS_LOG');
+      wq_EXCEL_READ_LOG.open;
 
       wq_EXCEL_READ_VAL.close;
       wq_EXCEL_READ_VAL.SQL.Clear;
-      wq_EXCEL_READ_VAL.SQL.Add('SELECT * FROM ' + stringreplace(Nom_procedure, '_SP_', '_TB_',
-          [rfReplaceAll, rfIgnoreCase]) + '_READ_XLS_CEL');
-      wq_EXCEL_READ_VAL.Open;
+      wq_EXCEL_READ_VAL.SQL.Add('SELECT * FROM ' + stringreplace(Nom_procedure, '_SP_', '_TB_', [rfReplaceAll, rfIgnoreCase]) + '_READ_XLS_CEL');
+      wq_EXCEL_READ_VAL.open;
 
       wq_EXCEL_READ_TAB.close;
       wq_EXCEL_READ_TAB.SQL.Clear;
-      wq_EXCEL_READ_TAB.SQL.Add('SELECT * FROM ' + stringreplace(Nom_procedure, '_SP_', '_TB_',
-          [rfReplaceAll, rfIgnoreCase]) + '_READ_XLS_TAB');
-      wq_EXCEL_READ_TAB.Open;
+      wq_EXCEL_READ_TAB.SQL.Add('SELECT * FROM ' + stringreplace(Nom_procedure, '_SP_', '_TB_', [rfReplaceAll, rfIgnoreCase]) + '_READ_XLS_TAB');
+      wq_EXCEL_READ_TAB.open;
 
       { TU_Valeurs.InsertSQL.Clear;
         Tu_valeurs.InsertSQL.Add('insert into ' + stringreplace(nom_procedure, '_SP_', '_TB_', [rfReplaceAll, rfIgnoreCase]) + '_READ_XLS_VAL');
@@ -1464,12 +1587,12 @@ begin
         end;
       end;
 
-      SP_EXCEL_READ_START.Open;
+      SP_EXCEL_READ_START.open;
 
-      if SP_EXCEL_READ_START.fieldbyname('Cle_Session').AsAnsiString <> '' then
+      if SP_EXCEL_READ_START.FieldByName('Cle_Session').AsAnsiString <> '' then
       begin
         // récupère la clé de session
-        Read_Excel_session := SP_EXCEL_READ_START.fieldbyname('Cle_Session').AsAnsiString;
+        Read_Excel_session := SP_EXCEL_READ_START.FieldByName('Cle_Session').AsAnsiString;
 
         // Récupères les fichiers à traiter
         if (Procedure_Exist(Nom_procedure + '_READ_XLS_REP') = True) then
@@ -1532,18 +1655,42 @@ begin
 
           end;
 
-          SP_EXCEL_READ_REP.Open;
+          SP_EXCEL_READ_REP.open;
           SP_EXCEL_READ_REP.first;
 
           wq_EXCEL_READ_FIC.close;
           wq_EXCEL_READ_FIC.SQL.Clear;
-          wq_EXCEL_READ_FIC.SQL.Add('SELECT * FROM ' + stringreplace(Nom_procedure, '_SP_', '_TB_',
-              [rfReplaceAll, rfIgnoreCase]) + '_READ_XLS_FIC');
-          wq_EXCEL_READ_FIC.Open;
+          wq_EXCEL_READ_FIC.SQL.Add('SELECT * FROM ' + stringreplace(Nom_procedure, '_SP_', '_TB_', [rfReplaceAll, rfIgnoreCase]) + '_READ_XLS_FIC');
+          wq_EXCEL_READ_FIC.open;
 
           while not SP_EXCEL_READ_REP.Eof do
           begin
-            Fichiers_Rep(SP_EXCEL_READ_REP.fieldbyname('Repertoire').AsAnsiString, N_user, Read_Excel_session);
+            Read_Excel_Rep_Chemin := SP_EXCEL_READ_REP.FieldByName('Repertoire').AsAnsiString;
+            if SP_EXCEL_READ_REP.FindField('Fichier') <> nil then
+            begin
+              Read_Excel_Rep_Fichier := SP_EXCEL_READ_REP.FieldByName('Fichier').AsAnsiString;
+            end
+            else
+            begin
+              Read_Excel_Rep_Fichier := '*.*';
+            end;
+            if SP_EXCEL_READ_REP.FindField('Indir') <> nil then
+            begin
+              if SP_EXCEL_READ_REP.FieldByName('Indir').AsAnsiString = 'Oui' then
+              begin
+                Read_Excel_Rep_Indir := True;
+              end
+              else
+              begin
+                Read_Excel_Rep_Indir := False;
+              end;
+            end
+            else
+            begin
+              Read_Excel_Rep_Indir := False;
+            end;
+
+            FileSearch(Read_Excel_Rep_Chemin, Read_Excel_Rep_Fichier, Read_Excel_Rep_Indir, N_user, Read_Excel_session);
             SP_EXCEL_READ_REP.Next;
           end;
 
@@ -1608,13 +1755,13 @@ begin
 
         end;
 
-        SP_EXCEL_READ.Open;
+        SP_EXCEL_READ.open;
         SP_EXCEL_READ.first;
 
         VarClear(Olexls);
         Olexls := CreateOleObject('Excel.application');
 
-        if SP_EXCEL_READ.fieldbyname('Fichier').AsAnsiString <> '' then
+        if SP_EXCEL_READ.FieldByName('Fichier').AsAnsiString <> '' then
         begin
 
           Olexls.Visible := False;
@@ -1623,7 +1770,7 @@ begin
 
           while not SP_EXCEL_READ.Eof do
           begin
-            Fichier_excel := SP_EXCEL_READ.fieldbyname('Fichier').AsAnsiString;
+            Fichier_excel := SP_EXCEL_READ.FieldByName('Fichier').AsAnsiString;
 
             if (Fichier_excel <> Fichier_excel_old) or (Read_Excel_File_Ok = False) then
             begin
@@ -1642,8 +1789,7 @@ begin
                   Read_Excel_File_Ok := True;
                 except
 
-                  Read_Excel_Log('KO', 'Problème rencontré à l''ouverture du fichier', Fichier_excel, '', N_user,
-                    Read_Excel_session);
+                  Read_Excel_Log('KO', 'Problème rencontré à l''ouverture du fichier', Fichier_excel, '', N_user, Read_Excel_session);
                   Read_Excel_File_Ok := False;
                 end;
 
@@ -1667,14 +1813,14 @@ begin
             end;
 
             // Mise a jour du fichier
-            Str_Feuille := SP_EXCEL_READ.fieldbyname('Feuille').AsAnsiString;
+            Str_Feuille := SP_EXCEL_READ.FieldByName('Feuille').AsAnsiString;
 
-            int_Line := SP_EXCEL_READ.fieldbyname('ligne').Asinteger;
-            int_col := SP_EXCEL_READ.fieldbyname('colonne').Asinteger;
-            int_line_End := SP_EXCEL_READ.fieldbyname('Ligne_End').Asinteger;
-            int_col_end := SP_EXCEL_READ.fieldbyname('colonne_End').Asinteger;
-            Plag_Cpt_vide := SP_EXCEL_READ.fieldbyname('Plage_Vide_Cpt').Asinteger;
-            Col_Cpt_vide := SP_EXCEL_READ.fieldbyname('Plage_Vide_Col').Asinteger;
+            int_Line := SP_EXCEL_READ.FieldByName('ligne').Asinteger;
+            int_col := SP_EXCEL_READ.FieldByName('colonne').Asinteger;
+            int_line_End := SP_EXCEL_READ.FieldByName('Ligne_End').Asinteger;
+            int_col_end := SP_EXCEL_READ.FieldByName('colonne_End').Asinteger;
+            Plag_Cpt_vide := SP_EXCEL_READ.FieldByName('Plage_Vide_Cpt').Asinteger;
+            Col_Cpt_vide := SP_EXCEL_READ.FieldByName('Plage_Vide_Col').Asinteger;
 
             try
               Olexls.ActiveWorkbook.Worksheets[Str_Feuille].activate;
@@ -1689,7 +1835,7 @@ begin
               goto Suite;
             end;
 
-            if SP_EXCEL_READ.fieldbyname('Mode').AsAnsiString = 'TAB' then
+            if SP_EXCEL_READ.FieldByName('Mode').AsAnsiString = 'TAB' then
             begin
               if int_line_End < 1 then
                 int_line_End := int_Line;
@@ -1728,18 +1874,18 @@ begin
               for j := int_Line to int_line_End do
               begin
                 wq_EXCEL_READ_TAB.Append;
-                wq_EXCEL_READ_TAB.fieldbyname('N_user').Asinteger := N_user;
-                wq_EXCEL_READ_TAB.fieldbyname('Cle_Session').AsAnsiString := Read_Excel_session;
-                wq_EXCEL_READ_TAB.fieldbyname('Fichier').AsAnsiString := Fichier_excel;
-                wq_EXCEL_READ_TAB.fieldbyname('Feuille').AsAnsiString := Str_Feuille;
-                wq_EXCEL_READ_TAB.fieldbyname('Ligne').Asinteger := j;
+                wq_EXCEL_READ_TAB.FieldByName('N_user').Asinteger := N_user;
+                wq_EXCEL_READ_TAB.FieldByName('Cle_Session').AsAnsiString := Read_Excel_session;
+                wq_EXCEL_READ_TAB.FieldByName('Fichier').AsAnsiString := Fichier_excel;
+                wq_EXCEL_READ_TAB.FieldByName('Feuille').AsAnsiString := Str_Feuille;
+                wq_EXCEL_READ_TAB.FieldByName('Ligne').Asinteger := j;
 
                 for i := int_col to int_col_end do
                 begin
                   try
-                    Read_Excel_Valeur := Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[j, i].value;
+                    Read_Excel_Valeur := Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[j, i].Value;
 
-                    wq_EXCEL_READ_TAB.fieldbyname('Col_' + inttostr(i)).AsAnsiString := Read_Excel_Valeur;
+                    wq_EXCEL_READ_TAB.FieldByName('Col_' + inttostr(i)).AsAnsiString := Read_Excel_Valeur;
 
                   except
                     Read_Excel_Log('KO', 'Problème de lecture', Fichier_excel, Str_Feuille, N_user, Read_Excel_session);
@@ -1748,7 +1894,7 @@ begin
                 end;
                 wq_EXCEL_READ_TAB.post;
 
-                Read_Excel_Vide := Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[j, Col_Cpt_vide].value;
+                Read_Excel_Vide := Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[j, Col_Cpt_vide].Value;
 
                 if Read_Excel_Vide = '' then
                 begin
@@ -1764,7 +1910,7 @@ begin
               end;
             end;
 
-            if SP_EXCEL_READ.fieldbyname('Mode').AsAnsiString = 'CEL' then
+            if SP_EXCEL_READ.FieldByName('Mode').AsAnsiString = 'CEL' then
             begin
               if int_line_End < 1 then
                 int_line_End := int_Line;
@@ -1785,16 +1931,16 @@ begin
                 for j := int_Line to int_line_End do
                 begin
                   try
-                    Read_Excel_Valeur := Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[j, i].value;
+                    Read_Excel_Valeur := Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[j, i].Value;
 
                     wq_EXCEL_READ_VAL.Append;
-                    wq_EXCEL_READ_VAL.fieldbyname('N_user').Asinteger := N_user;
-                    wq_EXCEL_READ_VAL.fieldbyname('Cle_Session').AsAnsiString := Read_Excel_session;
-                    wq_EXCEL_READ_VAL.fieldbyname('Fichier').AsAnsiString := Fichier_excel;
-                    wq_EXCEL_READ_VAL.fieldbyname('Feuille').AsAnsiString := Str_Feuille;
-                    wq_EXCEL_READ_VAL.fieldbyname('Ligne').Asinteger := j;
-                    wq_EXCEL_READ_VAL.fieldbyname('Colonne').Asinteger := i;
-                    wq_EXCEL_READ_VAL.fieldbyname('Valeur').AsAnsiString := Read_Excel_Valeur;
+                    wq_EXCEL_READ_VAL.FieldByName('N_user').Asinteger := N_user;
+                    wq_EXCEL_READ_VAL.FieldByName('Cle_Session').AsAnsiString := Read_Excel_session;
+                    wq_EXCEL_READ_VAL.FieldByName('Fichier').AsAnsiString := Fichier_excel;
+                    wq_EXCEL_READ_VAL.FieldByName('Feuille').AsAnsiString := Str_Feuille;
+                    wq_EXCEL_READ_VAL.FieldByName('Ligne').Asinteger := j;
+                    wq_EXCEL_READ_VAL.FieldByName('Colonne').Asinteger := i;
+                    wq_EXCEL_READ_VAL.FieldByName('Valeur').AsAnsiString := Read_Excel_Valeur;
                     wq_EXCEL_READ_VAL.post;
 
                     if Read_Excel_Valeur = '' then
@@ -1902,16 +2048,14 @@ begin
 
           end;
 
-          SP_EXCEL_READ_MOVE.Open;
+          SP_EXCEL_READ_MOVE.open;
 
           SP_EXCEL_READ_MOVE.first;
 
           while not SP_EXCEL_READ_MOVE.Eof do
           begin
 
-            Result_Move := MoveFileEx(PChar(SP_EXCEL_READ_MOVE.fieldbyname('Fichier_Source').AsAnsiString),
-              PChar(SP_EXCEL_READ_MOVE.fieldbyname('Fichier_Destination').AsAnsiString),
-              MOVEFILE_COPY_ALLOWED + MOVEFILE_REPLACE_EXISTING);
+            Result_Move := MoveFileEx(PChar(SP_EXCEL_READ_MOVE.FieldByName('Fichier_Source').AsAnsiString), PChar(SP_EXCEL_READ_MOVE.FieldByName('Fichier_Destination').AsAnsiString), MOVEFILE_COPY_ALLOWED + MOVEFILE_REPLACE_EXISTING);
             // if Integer(Result_Move) <> 0 then
             // begin
             // Read_Excel_Log('KO', 'Problème de déplacement', SP_EXCEL_READ_MOVE.fieldbyname('Fichier_Source').AsAnsiString, '', N_user, Read_Excel_session);
@@ -2026,13 +2170,11 @@ begin
         try
           if (Procedure_Exist(Nom_procedure + '_EXCEL_BEFORE') = True) then
           begin
-            SP_EXCEL_BEFORE.Open;
+            SP_EXCEL_BEFORE.open;
 
-            if (SP_EXCEL_BEFORE.fieldbyname('Msg').Asstring <> '') then
+            if (SP_EXCEL_BEFORE.FieldByName('Msg').Asstring <> '') then
             begin
-              choix := Application.MessageBox(PChar(SP_EXCEL_BEFORE.fieldbyname('Msg').Asstring),
-                PChar(SP_EXCEL_BEFORE.fieldbyname('Caption').Asstring),
-                SP_EXCEL_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+              choix := Application.MessageBox(PChar(SP_EXCEL_BEFORE.FieldByName('Msg').Asstring), PChar(SP_EXCEL_BEFORE.FieldByName('Caption').Asstring), SP_EXCEL_BEFORE.FieldByName('Flags').Asinteger + MB_TOPMOST);
 
               if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
               begin
@@ -2042,7 +2184,7 @@ begin
               end;
             end;
 
-            if (SP_EXCEL_BEFORE.fieldbyname('Result').Asinteger <> 1) then
+            if (SP_EXCEL_BEFORE.FieldByName('Result').Asinteger <> 1) then
             begin
               SP_EXCEL_BEFORE.close;
               Fin_Appli;
@@ -2115,7 +2257,7 @@ begin
           end;
         end;
 
-        SP_EXCEL.Open;
+        SP_EXCEL.open;
 
         SP_EXCEL.first;
 
@@ -2123,9 +2265,9 @@ begin
         VarClear(Olexls);
         Olexls := CreateOleObject('Excel.application');
 
-        if SP_EXCEL.fieldbyname('Fichier').AsAnsiString <> '' then
+        if SP_EXCEL.FieldByName('Fichier').AsAnsiString <> '' then
         begin
-          if SP_EXCEL.fieldbyname('Excel_Visible').AsAnsiString = 'Oui' then
+          if SP_EXCEL.FieldByName('Excel_Visible').AsAnsiString = 'Oui' then
           begin
             Olexls.Visible := True;
             Olexls.screenupdating := False;
@@ -2139,14 +2281,14 @@ begin
           Fichier_excel_Save_old := '';
 
           Str_Feuille_Old := '';
-          Fermer_excel := SP_EXCEL.fieldbyname('Fermer_Fichier').AsAnsiString;
+          Fermer_excel := SP_EXCEL.FieldByName('Fermer_Fichier').AsAnsiString;
           while not SP_EXCEL.Eof do
           begin
-            Fichier_excel := SP_EXCEL.fieldbyname('Fichier').AsAnsiString;
+            Fichier_excel := SP_EXCEL.FieldByName('Fichier').AsAnsiString;
 
             if SP_EXCEL.FindField('Fichier_Dest') <> nil then
             begin
-              Fichier_excel_Save := SP_EXCEL.fieldbyname('Fichier_Dest').AsAnsiString;
+              Fichier_excel_Save := SP_EXCEL.FieldByName('Fichier_Dest').AsAnsiString;
             end;
 
             if (Fichier_excel <> Fichier_excel_old) or (Fichier_excel_Save <> Fichier_excel_Save_old) then
@@ -2177,7 +2319,7 @@ begin
                 end;
               end;
 
-              Fermer_excel := SP_EXCEL.fieldbyname('Fermer_Fichier').AsAnsiString;
+              Fermer_excel := SP_EXCEL.FieldByName('Fermer_Fichier').AsAnsiString;
               Fichier_excel_old := Fichier_excel;
               Fichier_excel_Save_old := Fichier_excel_Save;
 
@@ -2196,13 +2338,13 @@ begin
             end;
 
             // Mise a jour du fichier
-            Str_Feuille := SP_EXCEL.fieldbyname('Feuille').AsAnsiString;
+            Str_Feuille := SP_EXCEL.FieldByName('Feuille').AsAnsiString;
 
             if Str_Feuille <> Str_Feuille_Old then
             begin
-              if SP_EXCEL.fieldbyname('Range_Clear_Avant').AsAnsiString <> '' then
+              if SP_EXCEL.FieldByName('Range_Clear_Avant').AsAnsiString <> '' then
               begin
-                Range_Clear := SP_EXCEL.fieldbyname('Range_Clear_Avant').AsAnsiString;
+                Range_Clear := SP_EXCEL.FieldByName('Range_Clear_Avant').AsAnsiString;
 
                 Olexls.ActiveWorkbook.Worksheets[Str_Feuille].select;
                 Olexls.Range[Range_Clear].clearcontents;
@@ -2210,8 +2352,8 @@ begin
               Str_Feuille_Old := Str_Feuille;
             end;
 
-            int_Line := SP_EXCEL.fieldbyname('line').Asinteger;
-            int_col := SP_EXCEL.fieldbyname('col').Asinteger;
+            int_Line := SP_EXCEL.FieldByName('line').Asinteger;
+            int_col := SP_EXCEL.FieldByName('col').Asinteger;
             try
               Olexls.ActiveWorkbook.Worksheets[Str_Feuille].activate;
 
@@ -2220,152 +2362,143 @@ begin
               Olexls.ActiveWorkbook.Worksheets[1].name := Str_Feuille;
             end;
 
-            if (SP_EXCEL.fieldbyname('Type_Valeur').Asinteger = 1) then
+            if (SP_EXCEL.FieldByName('Type_Valeur').Asinteger = 1) then
             begin
-              Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].NumberFormat :=
-                  SP_EXCEL.fieldbyname('Format_Valeur').AsAnsiString;
-              Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].Formula := SP_EXCEL.fieldbyname
-                  ('Valeur_Texte').AsAnsiString;
+              Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].NumberFormat := SP_EXCEL.FieldByName('Format_Valeur').AsAnsiString;
+              Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].Formula := SP_EXCEL.FieldByName('Valeur_Texte').AsAnsiString;
             end;
 
-            if (SP_EXCEL.fieldbyname('Type_Valeur').Asinteger = 2) then
+            if (SP_EXCEL.FieldByName('Type_Valeur').Asinteger = 2) then
             begin
-              Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].NumberFormat :=
-                  SP_EXCEL.fieldbyname('Format_Valeur').AsAnsiString;
-              Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].Formula := SP_EXCEL.fieldbyname
-                  ('Valeur_Date').AsAnsiString;
+              Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].NumberFormat := SP_EXCEL.FieldByName('Format_Valeur').AsAnsiString;
+              Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].Formula := SP_EXCEL.FieldByName('Valeur_Date').AsAnsiString;
             end;
 
-            if (SP_EXCEL.fieldbyname('Type_Valeur').Asinteger = 3) then
+            if (SP_EXCEL.FieldByName('Type_Valeur').Asinteger = 3) then
             begin
-              Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].NumberFormat :=
-                  SP_EXCEL.fieldbyname('Format_Valeur').AsAnsiString;
-              Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].Formula := SP_EXCEL.fieldbyname
-                  ('Valeur_Numeric').asFloat;
+              Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].NumberFormat := SP_EXCEL.FieldByName('Format_Valeur').AsAnsiString;
+              Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].Formula := SP_EXCEL.FieldByName('Valeur_Numeric').asFloat;
             end;
 
             if SP_EXCEL.FindField('ColorFond') <> nil then
             begin
-              if SP_EXCEL.fieldbyname('ColorFond').Asinteger <> 0 then
+              if SP_EXCEL.FieldByName('ColorFond').Asinteger <> 0 then
               begin
-                Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].Interior.Color :=
-                    SP_EXCEL.fieldbyname('ColorFond').Asinteger;
+                Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].Interior.Color := SP_EXCEL.FieldByName('ColorFond').Asinteger;
               end;
             end;
 
             if SP_EXCEL.FindField('ColorTexte') <> nil then
             begin
-              if SP_EXCEL.fieldbyname('ColorTexte').Asinteger <> 0 then
+              if SP_EXCEL.FieldByName('ColorTexte').Asinteger <> 0 then
               begin
-                Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line,
-                    int_col].Font.Color := SP_EXCEL.fieldbyname('ColorTexte').Asinteger;
+                Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].Font.Color := SP_EXCEL.FieldByName('ColorTexte').Asinteger;
               end;
             end;
 
             if SP_EXCEL.FindField('StyleFonte') <> nil then
             begin
-              if ((SP_EXCEL.fieldbyname('StyleFonte').Asinteger and 1) = 1) then
+              if ((SP_EXCEL.FieldByName('StyleFonte').Asinteger and 1) = 1) then
                 Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].Font.Bold := True;
 
-              if ((SP_EXCEL.fieldbyname('StyleFonte').Asinteger and 2) = 2) then
+              if ((SP_EXCEL.FieldByName('StyleFonte').Asinteger and 2) = 2) then
                 Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].Font.Italic := True;
 
-              if ((SP_EXCEL.fieldbyname('StyleFonte').Asinteger and 4) = 4) then
+              if ((SP_EXCEL.FieldByName('StyleFonte').Asinteger and 4) = 4) then
                 Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].Font.Underline := True;
 
             end;
 
             if SP_EXCEL.FindField('SizeTexte') <> nil then
             begin
-              if SP_EXCEL.fieldbyname('SizeTexte').Asinteger <> 0 then
+              if SP_EXCEL.FieldByName('SizeTexte').Asinteger <> 0 then
               begin
-                Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].Font.size := SP_EXCEL.fieldbyname
-                    ('SizeTexte').Asinteger;
+                Olexls.ActiveWorkbook.Worksheets[Str_Feuille].Cells[int_Line, int_col].Font.size := SP_EXCEL.FieldByName('SizeTexte').Asinteger;
               end;
             end;
 
             if SP_EXCEL.FindField('Range_Rows_AutoFit') <> nil then
             begin
-              if SP_EXCEL.fieldbyname('Range_Rows_AutoFit').AsAnsiString <> '' then
+              if SP_EXCEL.FieldByName('Range_Rows_AutoFit').AsAnsiString <> '' then
               begin
-                Range_Fit := SP_EXCEL.fieldbyname('Range_Rows_AutoFit').AsAnsiString;
+                Range_Fit := SP_EXCEL.FieldByName('Range_Rows_AutoFit').AsAnsiString;
                 Olexls.Range[Range_Fit].Rows.Autofit;
               end;
             end;
 
             if SP_EXCEL.FindField('Range_Columns_AutoFit') <> nil then
             begin
-              if SP_EXCEL.fieldbyname('Range_Columns_AutoFit').AsAnsiString <> '' then
+              if SP_EXCEL.FieldByName('Range_Columns_AutoFit').AsAnsiString <> '' then
               begin
-                Range_Fit := SP_EXCEL.fieldbyname('Range_Columns_AutoFit').AsAnsiString;
+                Range_Fit := SP_EXCEL.FieldByName('Range_Columns_AutoFit').AsAnsiString;
                 Olexls.Range[Range_Fit].Columns.Autofit;
               end;
             end;
 
             if SP_EXCEL.FindField('Range_Rows_Group') <> nil then
             begin
-              if SP_EXCEL.fieldbyname('Range_Rows_Group').AsAnsiString <> '' then
+              if SP_EXCEL.FieldByName('Range_Rows_Group').AsAnsiString <> '' then
               begin
-                Range_Fit := SP_EXCEL.fieldbyname('Range_Rows_Group').AsAnsiString;
+                Range_Fit := SP_EXCEL.FieldByName('Range_Rows_Group').AsAnsiString;
                 Olexls.Range[Range_Fit].EntireRow.Group;
               end;
             end;
 
             if SP_EXCEL.FindField('Range_Columns_Group') <> nil then
             begin
-              if SP_EXCEL.fieldbyname('Range_Columns_Group').AsAnsiString <> '' then
+              if SP_EXCEL.FieldByName('Range_Columns_Group').AsAnsiString <> '' then
               begin
-                Range_Fit := SP_EXCEL.fieldbyname('Range_Columns_Group').AsAnsiString;
+                Range_Fit := SP_EXCEL.FieldByName('Range_Columns_Group').AsAnsiString;
                 Olexls.Range[Range_Fit].EntireColumn.Group;
               end;
             end;
 
             if SP_EXCEL.FindField('Range_Rows_UnGroup') <> nil then
             begin
-              if SP_EXCEL.fieldbyname('Range_Rows_UnGroup').AsAnsiString <> '' then
+              if SP_EXCEL.FieldByName('Range_Rows_UnGroup').AsAnsiString <> '' then
               begin
-                Range_Fit := SP_EXCEL.fieldbyname('Range_Rows_UnGroup').AsAnsiString;
+                Range_Fit := SP_EXCEL.FieldByName('Range_Rows_UnGroup').AsAnsiString;
                 Olexls.Range[Range_Fit].EntireRow.UnGroup;
               end;
             end;
 
             if SP_EXCEL.FindField('Range_Columns_UnGroup') <> nil then
             begin
-              if SP_EXCEL.fieldbyname('Range_Columns_UnGroup').AsAnsiString <> '' then
+              if SP_EXCEL.FieldByName('Range_Columns_UnGroup').AsAnsiString <> '' then
               begin
-                Range_Fit := SP_EXCEL.fieldbyname('Range_Columns_UnGroup').AsAnsiString;
+                Range_Fit := SP_EXCEL.FieldByName('Range_Columns_UnGroup').AsAnsiString;
                 Olexls.Range[Range_Fit].EntireColumn.UnGroup;
               end;
             end;
             if SP_EXCEL.FindField('Range_Rows_Hide') <> nil then
             begin
-              if SP_EXCEL.fieldbyname('Range_Rows_Hide').AsAnsiString <> '' then
+              if SP_EXCEL.FieldByName('Range_Rows_Hide').AsAnsiString <> '' then
               begin
-                Range_Fit := SP_EXCEL.fieldbyname('Range_Rows_Hide').AsAnsiString;
+                Range_Fit := SP_EXCEL.FieldByName('Range_Rows_Hide').AsAnsiString;
                 Olexls.Range[Range_Fit].EntireRow.Hidden := True;
               end;
             end;
             if SP_EXCEL.FindField('Range_Columns_Hide') <> nil then
             begin
-              if SP_EXCEL.fieldbyname('Range_Columns_Hide').AsAnsiString <> '' then
+              if SP_EXCEL.FieldByName('Range_Columns_Hide').AsAnsiString <> '' then
               begin
-                Range_Fit := SP_EXCEL.fieldbyname('Range_Columns_Hide').AsAnsiString;
+                Range_Fit := SP_EXCEL.FieldByName('Range_Columns_Hide').AsAnsiString;
                 Olexls.Range[Range_Fit].EntireColumn.Hidden := True;
               end;
             end;
             if SP_EXCEL.FindField('Range_Rows_UnHide') <> nil then
             begin
-              if SP_EXCEL.fieldbyname('Range_Rows_UnHide').AsAnsiString <> '' then
+              if SP_EXCEL.FieldByName('Range_Rows_UnHide').AsAnsiString <> '' then
               begin
-                Range_Fit := SP_EXCEL.fieldbyname('Range_Rows_UnHide').AsAnsiString;
+                Range_Fit := SP_EXCEL.FieldByName('Range_Rows_UnHide').AsAnsiString;
                 Olexls.Range[Range_Fit].EntireRow.Hidden := False;
               end;
             end;
             if SP_EXCEL.FindField('Range_Columns_UnHide') <> nil then
             begin
-              if SP_EXCEL.fieldbyname('Range_Columns_UnHide').AsAnsiString <> '' then
+              if SP_EXCEL.FieldByName('Range_Columns_UnHide').AsAnsiString <> '' then
               begin
-                Range_Fit := SP_EXCEL.fieldbyname('Range_Columns_UnHide').AsAnsiString;
+                Range_Fit := SP_EXCEL.FieldByName('Range_Columns_UnHide').AsAnsiString;
                 Olexls.Range[Range_Fit].EntireColumn.Hidden := False;
               end;
             end;
@@ -2375,16 +2508,15 @@ begin
 
           if SP_EXCEL.FindField('outline_ShowLevels') <> nil then
           begin
-            if SP_EXCEL.fieldbyname('outline_ShowLevels').Asinteger > 0 then
+            if SP_EXCEL.FieldByName('outline_ShowLevels').Asinteger > 0 then
             begin
-              Olexls.ActiveWorkbook.Worksheets[Str_Feuille].outline.ShowLevels
-                  (SP_EXCEL.fieldbyname('outline_ShowLevels').Asinteger);
+              Olexls.ActiveWorkbook.Worksheets[Str_Feuille].outline.ShowLevels(SP_EXCEL.FieldByName('outline_ShowLevels').Asinteger);
             end;
           end;
 
           if SP_EXCEL.FindField('Fichier_Dest') <> nil then
           begin
-            Fichier_excel_Save := SP_EXCEL.fieldbyname('Fichier_Dest').AsAnsiString;
+            Fichier_excel_Save := SP_EXCEL.FieldByName('Fichier_Dest').AsAnsiString;
             Olexls.ActiveWorkbook.SaveAs(Fichier_excel_Save);
           end
           else
@@ -2469,13 +2601,11 @@ begin
         try
           if (Procedure_Exist(Nom_procedure + '_OUTLOOK_BEFORE') = True) then
           begin
-            SP_OUTLOOK_BEFORE.Open;
+            SP_OUTLOOK_BEFORE.open;
 
-            if (SP_OUTLOOK_BEFORE.fieldbyname('Msg').Asstring <> '') then
+            if (SP_OUTLOOK_BEFORE.FieldByName('Msg').Asstring <> '') then
             begin
-              choix := Application.MessageBox(PChar(SP_OUTLOOK_BEFORE.fieldbyname('Msg').Asstring),
-                PChar(SP_OUTLOOK_BEFORE.fieldbyname('Caption').Asstring),
-                SP_OUTLOOK_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+              choix := Application.MessageBox(PChar(SP_OUTLOOK_BEFORE.FieldByName('Msg').Asstring), PChar(SP_OUTLOOK_BEFORE.FieldByName('Caption').Asstring), SP_OUTLOOK_BEFORE.FieldByName('Flags').Asinteger + MB_TOPMOST);
 
               if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
               begin
@@ -2485,7 +2615,7 @@ begin
               end;
             end;
 
-            if (SP_OUTLOOK_BEFORE.fieldbyname('Result').Asinteger <> 1) then
+            if (SP_OUTLOOK_BEFORE.FieldByName('Result').Asinteger <> 1) then
             begin
               SP_OUTLOOK_BEFORE.close;
               Fin_Appli;
@@ -2606,13 +2736,11 @@ begin
         try
           if (Procedure_Exist(Nom_procedure + '_OUTLOOK_AFTER') = True) then
           begin
-            SP_OUTLOOK_AFTER.Open;
+            SP_OUTLOOK_AFTER.open;
 
-            if (SP_OUTLOOK_AFTER.fieldbyname('Msg').Asstring <> '') then
+            if (SP_OUTLOOK_AFTER.FieldByName('Msg').Asstring <> '') then
             begin
-              choix := Application.MessageBox(PChar(SP_OUTLOOK_AFTER.fieldbyname('Msg').Asstring),
-                PChar(SP_OUTLOOK_AFTER.fieldbyname('Caption').Asstring),
-                SP_OUTLOOK_AFTER.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+              choix := Application.MessageBox(PChar(SP_OUTLOOK_AFTER.FieldByName('Msg').Asstring), PChar(SP_OUTLOOK_AFTER.FieldByName('Caption').Asstring), SP_OUTLOOK_AFTER.FieldByName('Flags').Asinteger + MB_TOPMOST);
 
               if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
               begin
@@ -2622,7 +2750,7 @@ begin
               end;
             end;
 
-            if (SP_OUTLOOK_AFTER.fieldbyname('Result').Asinteger <> 1) then
+            if (SP_OUTLOOK_AFTER.FieldByName('Result').Asinteger <> 1) then
             begin
               SP_OUTLOOK_AFTER.close;
               Fin_Appli;
@@ -2690,13 +2818,11 @@ begin
         try
           if (Procedure_Exist(Nom_procedure + '_PRINT_BEFORE') = True) then
           begin
-            SP_PRINT_BEFORE.Open;
+            SP_PRINT_BEFORE.open;
 
-            if (SP_PRINT_BEFORE.fieldbyname('Msg').Asstring <> '') then
+            if (SP_PRINT_BEFORE.FieldByName('Msg').Asstring <> '') then
             begin
-              choix := Application.MessageBox(PChar(SP_PRINT_BEFORE.fieldbyname('Msg').Asstring),
-                PChar(SP_PRINT_BEFORE.fieldbyname('Caption').Asstring),
-                SP_PRINT_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+              choix := Application.MessageBox(PChar(SP_PRINT_BEFORE.FieldByName('Msg').Asstring), PChar(SP_PRINT_BEFORE.FieldByName('Caption').Asstring), SP_PRINT_BEFORE.FieldByName('Flags').Asinteger + MB_TOPMOST);
 
               if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
               begin
@@ -2706,7 +2832,7 @@ begin
               end;
             end;
 
-            if (SP_PRINT_BEFORE.fieldbyname('Result').Asinteger <> 1) then
+            if (SP_PRINT_BEFORE.FieldByName('Result').Asinteger <> 1) then
             begin
               SP_PRINT_BEFORE.close;
               Fin_Appli;
@@ -2866,18 +2992,16 @@ begin
         try
           if (Procedure_Exist(Nom_procedure + '_PRINT_MAIL_BEFORE') = True) then
           begin
-            SP_PRINT_BEFORE.Open;
+            SP_PRINT_BEFORE.open;
 
             if SP_PRINT_BEFORE.FindField('ID') <> nil then
             Begin
-              Print_ID := SP_PRINT_BEFORE.fieldbyname('ID').Asstring;
+              Print_ID := SP_PRINT_BEFORE.FieldByName('ID').Asstring;
             End;
 
-            if (SP_PRINT_BEFORE.fieldbyname('Msg').Asstring <> '') then
+            if (SP_PRINT_BEFORE.FieldByName('Msg').Asstring <> '') then
             begin
-              choix := Application.MessageBox(PChar(SP_PRINT_BEFORE.fieldbyname('Msg').Asstring),
-                PChar(SP_PRINT_BEFORE.fieldbyname('Caption').AsAnsiString),
-                SP_PRINT_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+              choix := Application.MessageBox(PChar(SP_PRINT_BEFORE.FieldByName('Msg').Asstring), PChar(SP_PRINT_BEFORE.FieldByName('Caption').AsAnsiString), SP_PRINT_BEFORE.FieldByName('Flags').Asinteger + MB_TOPMOST);
 
               if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
               begin
@@ -2887,7 +3011,7 @@ begin
               end;
             end;
 
-            if (SP_PRINT_BEFORE.fieldbyname('Result').Asinteger <> 1) then
+            if (SP_PRINT_BEFORE.FieldByName('Result').Asinteger <> 1) then
             begin
               SP_PRINT_BEFORE.close;
               Fin_Appli;
@@ -3305,13 +3429,11 @@ begin
           try
             if (Procedure_Exist(Nom_procedure + '_TXT_BEFORE') = True) then
             begin
-              SP_TXT_BEFORE.Open;
+              SP_TXT_BEFORE.open;
 
-              if (SP_TXT_BEFORE.fieldbyname('Msg').Asstring <> '') then
+              if (SP_TXT_BEFORE.FieldByName('Msg').Asstring <> '') then
               begin
-                choix := Application.MessageBox(PChar(SP_TXT_BEFORE.fieldbyname('Msg').Asstring),
-                  PChar(SP_TXT_BEFORE.fieldbyname('Caption').Asstring),
-                  SP_TXT_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+                choix := Application.MessageBox(PChar(SP_TXT_BEFORE.FieldByName('Msg').Asstring), PChar(SP_TXT_BEFORE.FieldByName('Caption').Asstring), SP_TXT_BEFORE.FieldByName('Flags').Asinteger + MB_TOPMOST);
 
                 if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
                 begin
@@ -3321,7 +3443,7 @@ begin
                 end;
               end;
 
-              if (SP_TXT_BEFORE.fieldbyname('Result').Asinteger <> 1) then
+              if (SP_TXT_BEFORE.FieldByName('Result').Asinteger <> 1) then
               begin
                 SP_TXT_BEFORE.close;
                 Fin_Appli;
@@ -3338,21 +3460,19 @@ begin
           end;
 
           // comptage de la vue
-          SP_TXT.Open;
+          SP_TXT.open;
           SP_TXT.first;
           StringList := TStringList.Create;
 
           while not SP_TXT.Eof do
           begin
 
-            if (nom_fichier <> SP_TXT.fieldbyname('Repertoire').AsAnsiString + '\' + SP_TXT.fieldbyname('Fichier')
-                  .AsAnsiString) then
+            if (nom_fichier <> SP_TXT.FieldByName('Repertoire').AsAnsiString + '\' + SP_TXT.FieldByName('Fichier').AsAnsiString) then
             begin
               // si fichier change ferme l'ncien et ouvre le nouveau (si deja ouvert on ajoute a la fin)
               if (nom_fichier <> '') then
                 closefile(Fichier);
-              nom_fichier := SP_TXT.fieldbyname('Repertoire').AsAnsiString + '\' + SP_TXT.fieldbyname('Fichier')
-                  .AsAnsiString;
+              nom_fichier := SP_TXT.FieldByName('Repertoire').AsAnsiString + '\' + SP_TXT.FieldByName('Fichier').AsAnsiString;
 
               AssignFile(Fichier, nom_fichier);
 
@@ -3374,9 +3494,9 @@ begin
               StringList.Add(nom_fichier);
             end;
 
-            if (not SP_TXT.fieldbyname('DATA').isnull) then
+            if (not SP_TXT.FieldByName('DATA').isnull) then
             begin
-              Stream := TBlobStream.Create(SP_TXT.fieldbyname('DATA') as TBlobField, bmRead);
+              Stream := TBlobStream.Create(SP_TXT.FieldByName('DATA') as TBlobField, bmRead);
               try
                 MemSize := Stream.size;
                 Inc(MemSize); { pour l'espace du zéro terminal. }
@@ -3441,7 +3561,7 @@ begin
             SP_TXT.first;
             while not SP_TXT.Eof do
             begin
-              SP_TXT_VALIDE.Parameters.ParamByName('@n_cle').Value := SP_TXT.fieldbyname('n_cle').Value;
+              SP_TXT_VALIDE.Parameters.ParamByName('@n_cle').Value := SP_TXT.FieldByName('n_cle').Value;
               SP_TXT_VALIDE.ExecProc;
               SP_TXT.Next;
             end;
@@ -3486,13 +3606,11 @@ begin
           try
             if (Procedure_Exist(Nom_procedure + '_TXT_AFTER') = True) then
             begin
-              SP_TXT_AFTER.Open;
+              SP_TXT_AFTER.open;
 
-              if (SP_TXT_AFTER.fieldbyname('Msg').Asstring <> '') then
+              if (SP_TXT_AFTER.FieldByName('Msg').Asstring <> '') then
               begin
-                choix := Application.MessageBox(PChar(SP_TXT_AFTER.fieldbyname('Msg').Asstring),
-                  PChar(SP_TXT_AFTER.fieldbyname('Caption').Asstring),
-                  SP_TXT_AFTER.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+                choix := Application.MessageBox(PChar(SP_TXT_AFTER.FieldByName('Msg').Asstring), PChar(SP_TXT_AFTER.FieldByName('Caption').Asstring), SP_TXT_AFTER.FieldByName('Flags').Asinteger + MB_TOPMOST);
 
                 if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
                 begin
@@ -3502,7 +3620,7 @@ begin
                 end;
               end;
 
-              if (SP_TXT_AFTER.fieldbyname('Result').Asinteger <> 1) then
+              if (SP_TXT_AFTER.FieldByName('Result').Asinteger <> 1) then
               begin
                 SP_TXT_AFTER.close;
                 Fin_Appli;
@@ -3573,7 +3691,7 @@ begin
       if (Procedure_Exist(Nom_procedure + '_NAV') = True) then
       begin
         try
-          SP_NAV.Open;
+          SP_NAV.open;
         except
           ;
         end;
@@ -3604,7 +3722,7 @@ begin
                 Param_Top_Most := 0;
 
                 if SP_NAV.FindField('Top_Most') <> nil then
-                  Param_Top_Most := SP_NAV.fieldbyname('Top_Most').Asinteger;
+                  Param_Top_Most := SP_NAV.FieldByName('Top_Most').Asinteger;
 
                 F_Nav := TF_Nav.Create(Self);
                 HandleGeneMail := F_Nav.Handle;
@@ -3615,7 +3733,7 @@ begin
                 F_Nav.Timer := 0;
 
                 if SP_NAV.FindField('Timer') <> nil then
-                  F_Nav.Timer := SP_NAV.fieldbyname('Timer').Asinteger;
+                  F_Nav.Timer := SP_NAV.FieldByName('Timer').Asinteger;
 
                 F_Nav.Init;
 
@@ -3730,13 +3848,11 @@ begin
           try
             if (Procedure_Exist(Nom_procedure + '_CLOSE_BEFORE') = True) then
             begin
-              SP_CLOSE_BEFORE.Open;
+              SP_CLOSE_BEFORE.open;
 
-              if (SP_CLOSE_BEFORE.fieldbyname('Msg').Asstring <> '') then
+              if (SP_CLOSE_BEFORE.FieldByName('Msg').Asstring <> '') then
               begin
-                choix := Application.MessageBox(PChar(SP_CLOSE_BEFORE.fieldbyname('Msg').Asstring),
-                  PChar(SP_CLOSE_BEFORE.fieldbyname('Caption').Asstring),
-                  SP_CLOSE_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+                choix := Application.MessageBox(PChar(SP_CLOSE_BEFORE.FieldByName('Msg').Asstring), PChar(SP_CLOSE_BEFORE.FieldByName('Caption').Asstring), SP_CLOSE_BEFORE.FieldByName('Flags').Asinteger + MB_TOPMOST);
 
                 if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
                 begin
@@ -3746,7 +3862,7 @@ begin
                 end;
               end;
 
-              if (SP_CLOSE_BEFORE.fieldbyname('Result').Asinteger <> 1) then
+              if (SP_CLOSE_BEFORE.FieldByName('Result').Asinteger <> 1) then
               begin
                 SP_CLOSE_BEFORE.close;
                 Fin_Appli;
@@ -3762,12 +3878,12 @@ begin
             exit;
           end;
 
-          SP_CLOSE.Open;
+          SP_CLOSE.open;
 
           while (not SP_CLOSE.Eof) do
           begin
-            HAndle_close := SP_CLOSE.fieldbyname('HAndle').Asinteger;
-            Nom_Fenetre := SP_CLOSE.fieldbyname('Nom_Fenetre').AsAnsiString;
+            HAndle_close := SP_CLOSE.FieldByName('HAndle').Asinteger;
+            Nom_Fenetre := SP_CLOSE.FieldByName('Nom_Fenetre').AsAnsiString;
 
             if HAndle_close <> 0 then
             begin
@@ -3825,13 +3941,11 @@ begin
           try
             if (Procedure_Exist(Nom_procedure + '_CLOSE_AFTER') = True) then
             begin
-              SP_CLOSE_AFTER.Open;
+              SP_CLOSE_AFTER.open;
 
-              if (SP_CLOSE_AFTER.fieldbyname('Msg').Asstring <> '') then
+              if (SP_CLOSE_AFTER.FieldByName('Msg').Asstring <> '') then
               begin
-                choix := Application.MessageBox(PChar(SP_CLOSE_AFTER.fieldbyname('Msg').Asstring),
-                  PChar(SP_CLOSE_AFTER.fieldbyname('Caption').Asstring),
-                  SP_CLOSE_AFTER.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+                choix := Application.MessageBox(PChar(SP_CLOSE_AFTER.FieldByName('Msg').Asstring), PChar(SP_CLOSE_AFTER.FieldByName('Caption').Asstring), SP_CLOSE_AFTER.FieldByName('Flags').Asinteger + MB_TOPMOST);
 
                 if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
                 begin
@@ -3841,7 +3955,7 @@ begin
                 end;
               end;
 
-              if (SP_CLOSE_AFTER.fieldbyname('Result').Asinteger <> 1) then
+              if (SP_CLOSE_AFTER.FieldByName('Result').Asinteger <> 1) then
               begin
                 SP_CLOSE_AFTER.close;
                 Fin_Appli;
@@ -3936,13 +4050,11 @@ begin
           try
             if (Procedure_Exist(Nom_procedure + '_LOCK_BEFORE') = True) then
             begin
-              SP_LOCK_BEFORE.Open;
+              SP_LOCK_BEFORE.open;
 
-              if (SP_LOCK_BEFORE.fieldbyname('Msg').Asstring <> '') then
+              if (SP_LOCK_BEFORE.FieldByName('Msg').Asstring <> '') then
               begin
-                choix := Application.MessageBox(PChar(SP_LOCK_BEFORE.fieldbyname('Msg').Asstring),
-                  PChar(SP_LOCK_BEFORE.fieldbyname('Caption').Asstring),
-                  SP_LOCK_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+                choix := Application.MessageBox(PChar(SP_LOCK_BEFORE.FieldByName('Msg').Asstring), PChar(SP_LOCK_BEFORE.FieldByName('Caption').Asstring), SP_LOCK_BEFORE.FieldByName('Flags').Asinteger + MB_TOPMOST);
 
                 if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
                 begin
@@ -3952,7 +4064,7 @@ begin
                 end;
               end;
 
-              if (SP_LOCK_BEFORE.fieldbyname('Result').Asinteger <> 1) then
+              if (SP_LOCK_BEFORE.FieldByName('Result').Asinteger <> 1) then
               begin
                 SP_LOCK_BEFORE.close;
                 Fin_Appli;
@@ -3968,15 +4080,15 @@ begin
             exit;
           end;
 
-          SP_LOCK.Open;
+          SP_LOCK.open;
 
           while (not SP_LOCK.Eof) do
           begin
-            HAndle_close := SP_LOCK.fieldbyname('HAndle').Asinteger;
-            Nom_Fenetre := SP_LOCK.fieldbyname('Nom_Fenetre').AsAnsiString;
+            HAndle_close := SP_LOCK.FieldByName('HAndle').Asinteger;
+            Nom_Fenetre := SP_LOCK.FieldByName('Nom_Fenetre').AsAnsiString;
             if SP_LOCK.FindField('Lock') <> nil then
             begin
-              Lock := SP_LOCK.fieldbyname('Lock').Asinteger;
+              Lock := SP_LOCK.FieldByName('Lock').Asinteger;
             end
             else
             begin
@@ -4039,13 +4151,11 @@ begin
           try
             if (Procedure_Exist(Nom_procedure + '_LOCK_AFTER') = True) then
             begin
-              SP_LOCK_AFTER.Open;
+              SP_LOCK_AFTER.open;
 
-              if (SP_LOCK_AFTER.fieldbyname('Msg').Asstring <> '') then
+              if (SP_LOCK_AFTER.FieldByName('Msg').Asstring <> '') then
               begin
-                choix := Application.MessageBox(PChar(SP_LOCK_AFTER.fieldbyname('Msg').Asstring),
-                  PChar(SP_LOCK_AFTER.fieldbyname('Caption').Asstring),
-                  SP_LOCK_AFTER.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+                choix := Application.MessageBox(PChar(SP_LOCK_AFTER.FieldByName('Msg').Asstring), PChar(SP_LOCK_AFTER.FieldByName('Caption').Asstring), SP_LOCK_AFTER.FieldByName('Flags').Asinteger + MB_TOPMOST);
 
                 if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
                 begin
@@ -4055,7 +4165,7 @@ begin
                 end;
               end;
 
-              if (SP_LOCK_AFTER.fieldbyname('Result').Asinteger <> 1) then
+              if (SP_LOCK_AFTER.FieldByName('Result').Asinteger <> 1) then
               begin
                 SP_LOCK_AFTER.close;
                 Fin_Appli;
@@ -4127,7 +4237,7 @@ begin
             try
               if (Procedure_Exist(Nom_procedure + '_LISTE_FICHES') = True) then
               begin
-                SP_LISTE_FICHES.Open;
+                SP_LISTE_FICHES.open;
 
                 SP_LISTE_FICHES_BEFORE.ProcedureName := Nom_procedure + '_LISTE_FICHES_BEFORE';
                 With SP_LISTE_FICHES_BEFORE do
@@ -4163,13 +4273,11 @@ begin
                 try
                   if (Procedure_Exist(Nom_procedure + '_LISTE_FICHES_BEFORE') = True) then
                   begin
-                    SP_LISTE_FICHES_BEFORE.Open;
+                    SP_LISTE_FICHES_BEFORE.open;
 
-                    if (SP_LISTE_FICHES_BEFORE.fieldbyname('Msg').Asstring <> '') then
+                    if (SP_LISTE_FICHES_BEFORE.FieldByName('Msg').Asstring <> '') then
                     begin
-                      choix := Application.MessageBox(PChar(SP_LISTE_FICHES_BEFORE.fieldbyname('Msg').Asstring),
-                        PChar(SP_LISTE_FICHES_BEFORE.fieldbyname('Caption').Asstring),
-                        SP_LISTE_FICHES_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+                      choix := Application.MessageBox(PChar(SP_LISTE_FICHES_BEFORE.FieldByName('Msg').Asstring), PChar(SP_LISTE_FICHES_BEFORE.FieldByName('Caption').Asstring), SP_LISTE_FICHES_BEFORE.FieldByName('Flags').Asinteger + MB_TOPMOST);
                       if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
                       begin
                         SP_LISTE_FICHES_BEFORE.close;
@@ -4178,7 +4286,7 @@ begin
                       end;
                     end;
 
-                    if (SP_LISTE_FICHES_BEFORE.fieldbyname('Result').Asinteger <> 1) then
+                    if (SP_LISTE_FICHES_BEFORE.FieldByName('Result').Asinteger <> 1) then
                     begin
                       SP_LISTE_FICHES_BEFORE.close;
                       Fin_Appli;
@@ -4195,8 +4303,8 @@ begin
 
                 while (not SP_LISTE_FICHES.Eof) do
                 begin
-                  Type_Fiche := SP_LISTE_FICHES.fieldbyname('Type_Fiche').Asinteger;
-                  N_fiche := SP_LISTE_FICHES.fieldbyname('N_Fiche').Asinteger;
+                  Type_Fiche := SP_LISTE_FICHES.FieldByName('Type_Fiche').Asinteger;
+                  N_fiche := SP_LISTE_FICHES.FieldByName('N_Fiche').Asinteger;
 
                   if (N_fiche > 0) then
                   begin
@@ -4205,7 +4313,7 @@ begin
 
                     if (SP_LISTE_FICHES.FindField('Tempo') <> nil) then
                     begin
-                      sleep(SP_LISTE_FICHES.fieldbyname('Tempo').Asinteger);
+                      sleep(SP_LISTE_FICHES.FieldByName('Tempo').Asinteger);
                     end;
 
                     Voir_Fiche(N_fiche, Type_Fiche);
@@ -4319,13 +4427,11 @@ begin
         try
           if (Procedure_Exist(Nom_procedure + '_REFRESH_BEFORE') = True) then
           begin
-            SP_REFRESH_BEFORE.Open;
+            SP_REFRESH_BEFORE.open;
 
-            if (SP_REFRESH_BEFORE.fieldbyname('Msg').Asstring <> '') then
+            if (SP_REFRESH_BEFORE.FieldByName('Msg').Asstring <> '') then
             begin
-              choix := Application.MessageBox(PChar(SP_REFRESH_BEFORE.fieldbyname('Msg').Asstring),
-                PChar(SP_REFRESH_BEFORE.fieldbyname('Caption').Asstring),
-                SP_REFRESH_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+              choix := Application.MessageBox(PChar(SP_REFRESH_BEFORE.FieldByName('Msg').Asstring), PChar(SP_REFRESH_BEFORE.FieldByName('Caption').Asstring), SP_REFRESH_BEFORE.FieldByName('Flags').Asinteger + MB_TOPMOST);
 
               if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
               begin
@@ -4335,7 +4441,7 @@ begin
               end;
             end;
 
-            if (SP_REFRESH_BEFORE.fieldbyname('Result').Asinteger <> 1) then
+            if (SP_REFRESH_BEFORE.FieldByName('Result').Asinteger <> 1) then
             begin
               SP_REFRESH_BEFORE.close;
               Fin_Appli;
@@ -4351,13 +4457,13 @@ begin
           exit;
         end;
 
-        SP_REFRESH.Open;
+        SP_REFRESH.open;
 
         while (not SP_REFRESH.Eof) do
         begin
-          Type_Fiche := SP_REFRESH.fieldbyname('Type_Fiche').Asinteger;
-          N_fiche := SP_REFRESH.fieldbyname('N_Fiche').Asinteger;
-          Nom_Fenetre := SP_REFRESH.fieldbyname('Nom_Fenetre').AsAnsiString;
+          Type_Fiche := SP_REFRESH.FieldByName('Type_Fiche').Asinteger;
+          N_fiche := SP_REFRESH.FieldByName('N_Fiche').Asinteger;
+          Nom_Fenetre := SP_REFRESH.FieldByName('Nom_Fenetre').AsAnsiString;
 
           // Recherche la fenetre demandé
           Handle_Fenetre := 0;
@@ -4417,7 +4523,7 @@ begin
     try
       if (Procedure_Exist(Nom_procedure + '_OPEN_APPLI') = True) then
       begin
-        SP_OPEN_APPLI.Open;
+        SP_OPEN_APPLI.open;
 
         SP_OPEN_APPLI_BEFORE.ProcedureName := Nom_procedure + '_OPEN_APPLI_BEFORE';
         With SP_OPEN_APPLI_BEFORE do
@@ -4456,13 +4562,11 @@ begin
           if (Procedure_Exist(Nom_procedure + '_OPEN_APPLI_BEFORE') = True) then
           begin
 
-            SP_OPEN_APPLI_BEFORE.Open;
+            SP_OPEN_APPLI_BEFORE.open;
 
-            if (SP_OPEN_APPLI_BEFORE.fieldbyname('Msg').Asstring <> '') then
+            if (SP_OPEN_APPLI_BEFORE.FieldByName('Msg').Asstring <> '') then
             begin
-              choix := Application.MessageBox(PChar(SP_OPEN_APPLI_BEFORE.fieldbyname('Msg').Asstring),
-                PChar(SP_OPEN_APPLI_BEFORE.fieldbyname('Caption').Asstring),
-                SP_OPEN_APPLI_BEFORE.fieldbyname('Flags').Asinteger + MB_TOPMOST);
+              choix := Application.MessageBox(PChar(SP_OPEN_APPLI_BEFORE.FieldByName('Msg').Asstring), PChar(SP_OPEN_APPLI_BEFORE.FieldByName('Caption').Asstring), SP_OPEN_APPLI_BEFORE.FieldByName('Flags').Asinteger + MB_TOPMOST);
               if (choix = IDCANCEL) or (choix = IDNO) or (choix = IDABORT) then
               begin
                 SP_OPEN_APPLI_BEFORE.close;
@@ -4470,7 +4574,7 @@ begin
                 exit;
               end;
             end;
-            if (SP_OPEN_APPLI_BEFORE.fieldbyname('Result').Asinteger <> 1) then
+            if (SP_OPEN_APPLI_BEFORE.FieldByName('Result').Asinteger <> 1) then
             begin
               SP_OPEN_APPLI_BEFORE.close;
               Fin_Appli;
@@ -4487,19 +4591,19 @@ begin
 
         while (not SP_OPEN_APPLI.Eof) do
         begin
-          Param_Str := SP_OPEN_APPLI.fieldbyname('Parametres').Asstring;
+          Param_Str := SP_OPEN_APPLI.FieldByName('Parametres').Asstring;
           Param_Str := stringreplace(Param_Str, '$DB', Db, []);
           Param_Str := stringreplace(Param_Str, '$USER', inttostr(N_user), []);
           Param_Str := stringreplace(Param_Str, '$N', inttostr(cle), []);
           Param_Str := stringreplace(Param_Str, '$HANDLE', inttostr(Handle), []);
 
-          Fexe := SP_OPEN_APPLI.fieldbyname('Appli').Asstring;
+          Fexe := SP_OPEN_APPLI.FieldByName('Appli').Asstring;
           if Pos('\', Fexe) <= 0 then
           begin
             Fexe := ExtractFileDir(ParamStr(0)) + '\' + Fexe;
           end;
 
-          ShellExecute(0, 'open', PChar(Fexe), PChar(Param_Str), nil, SP_OPEN_APPLI.fieldbyname('Mode').Value);
+          ShellExecute(0, 'open', PChar(Fexe), PChar(Param_Str), nil, SP_OPEN_APPLI.FieldByName('Mode').Value);
 
           SP_OPEN_APPLI.Next;
         end;
@@ -4616,47 +4720,47 @@ begin
   TabFrom[length(Source) + 1] := #0;
   FlagsOptions := 0;
 
-  if SP_COPY_FILE.fieldbyname('Fonction').AsAnsiString = 'Copier' then
+  if SP_COPY_FILE.FieldByName('Fonction').AsAnsiString = 'Copier' then
   begin
     lpFileOp.wFunc := FO_COPY;
     lpFileOp.pTo := PwideChar(Cible);
   end;
-  if SP_COPY_FILE.fieldbyname('Fonction').AsAnsiString = 'Effacer' then
+  if SP_COPY_FILE.FieldByName('Fonction').AsAnsiString = 'Effacer' then
   begin
     lpFileOp.wFunc := FO_DELETE;
     lpFileOp.pTo := '';
   end;
-  if SP_COPY_FILE.fieldbyname('Fonction').AsAnsiString = 'Deplacer' then
+  if SP_COPY_FILE.FieldByName('Fonction').AsAnsiString = 'Deplacer' then
   begin
     lpFileOp.wFunc := FO_MOVE;
     lpFileOp.pTo := PwideChar(Cible);
   end;
-  if SP_COPY_FILE.fieldbyname('Fonction').AsAnsiString = 'Renommer' then
+  if SP_COPY_FILE.FieldByName('Fonction').AsAnsiString = 'Renommer' then
   begin
     lpFileOp.wFunc := FO_RENAME;
     lpFileOp.pTo := PwideChar(Cible);
   end;
 
-  if SP_COPY_FILE.fieldbyname('PossibleAnnuler').AsAnsiString = 'Oui' then
+  if SP_COPY_FILE.FieldByName('PossibleAnnuler').AsAnsiString = 'Oui' then
   begin
     FlagsOptions := FlagsOptions + FOF_ALLOWUNDO;
   end;
-  if SP_COPY_FILE.fieldbyname('ChangeNomSiCollision').AsAnsiString = 'Oui' then
+  if SP_COPY_FILE.FieldByName('ChangeNomSiCollision').AsAnsiString = 'Oui' then
   begin
     FlagsOptions := FlagsOptions + FOF_RENAMEONCOLLISION;
   end;
-  if SP_COPY_FILE.fieldbyname('SansConfirmation').AsAnsiString = 'Oui' then
+  if SP_COPY_FILE.FieldByName('SansConfirmation').AsAnsiString = 'Oui' then
   begin
     FlagsOptions := FlagsOptions + FOF_NOCONFIRMATION;
   end;
-  if SP_COPY_FILE.fieldbyname('SansProgression').AsAnsiString = 'Oui' then
+  if SP_COPY_FILE.FieldByName('SansProgression').AsAnsiString = 'Oui' then
   begin
     FlagsOptions := FlagsOptions + FOF_SILENT;
   end;
 
   if SP_COPY_FILE.FindField('Fichiers_Seulement') <> nil then
   begin
-    if SP_COPY_FILE.fieldbyname('Fichiers_Seulement').AsAnsiString = 'Oui' then
+    if SP_COPY_FILE.FieldByName('Fichiers_Seulement').AsAnsiString = 'Oui' then
     begin
       FlagsOptions := FlagsOptions + FOF_FILESONLY;
     end;
@@ -4664,7 +4768,7 @@ begin
 
   if SP_COPY_FILE.FindField('SansConfirmation_Rep') <> nil then
   begin
-    if SP_COPY_FILE.fieldbyname('SansConfirmation_Rep').AsAnsiString = 'Oui' then
+    if SP_COPY_FILE.FieldByName('SansConfirmation_Rep').AsAnsiString = 'Oui' then
     begin
       FlagsOptions := FlagsOptions + FOF_NOCONFIRMMKDIR;
     end;
@@ -4672,7 +4776,7 @@ begin
 
   if SP_COPY_FILE.FindField('PasMessageErreur') <> nil then
   begin
-    if SP_COPY_FILE.fieldbyname('PasMessageErreur').AsAnsiString = 'Oui' then
+    if SP_COPY_FILE.FieldByName('PasMessageErreur').AsAnsiString = 'Oui' then
     begin
       FlagsOptions := FlagsOptions + FOF_NOERRORUI;
     end;
@@ -4680,7 +4784,7 @@ begin
 
   if SP_COPY_FILE.FindField('SimpleProgress') <> nil then
   begin
-    if SP_COPY_FILE.fieldbyname('SimpleProgress').AsAnsiString = 'Oui' then
+    if SP_COPY_FILE.FieldByName('SimpleProgress').AsAnsiString = 'Oui' then
     begin
       FlagsOptions := FlagsOptions + FOF_SIMPLEPROGRESS;
     end;
@@ -4728,8 +4832,8 @@ begin
   begin
     wq_wm.close;
     wq_wm.Parameters.ParamByName('Type_Fiche').Value := Fiche;
-    wq_wm.Open;
-    WM_GENESYS := wq_wm.fieldbyname('WM_Genesys').Asinteger;
+    wq_wm.open;
+    WM_GENESYS := wq_wm.FieldByName('WM_Genesys').Asinteger;
     wq_wm.close;
 
     postmessage(HWND(Form1.Handle_ouverture), WM_GENESYS, N_fiche, 0); // où Handle est le handle de la fenetre passé au MagicBtn par $HANDLE
@@ -4779,51 +4883,87 @@ begin
   fcLabel1.Caption := AdvEdit2.Text;
 end;
 
-procedure TForm1.Fichiers_Rep(Source: string; N_user: Integer; Cle_Session: string);
+procedure TForm1.FileSearch_FIC(const PathName, Filename: string; const InDir: Boolean; N_user: Integer; Cle_Session: string);
 var
-  Info: TSearchRec;
-  Chemin: string;
+  Rec: TSearchRec;
+  Path: string;
 begin
+  Path := IncludeTrailingBackslash(PathName);
+  if FindFirst(Path + Filename, faAnyFile - faDirectory, Rec) = 0 then
+    try
+      repeat
+        wq_LISTE_FICHIERS.Append;
+        wq_LISTE_FICHIERS.FieldByName('N_user').Asinteger := N_user;
+        wq_LISTE_FICHIERS.FieldByName('ID_Session').AsAnsiString := Cle_Session;
+        wq_LISTE_FICHIERS.FieldByName('Repertoire').AsAnsiString := Path;
+        wq_LISTE_FICHIERS.FieldByName('Fichier').AsAnsiString := Rec.Name;
+        wq_LISTE_FICHIERS.post;
 
-  { Pour être sur que la barre oblique finisse le nom du chemin }
-  // Chemin := IncludeTrailingPathDelimiter(Source);
-  Chemin := Source;
-  { Recherche de la première entrée du répertoire }
-  if FindFirst(Chemin + '*.*', faAnyFile, Info) = 0 then
-  begin
-    repeat
-      { Les fichiers sont affichés dans ListBox1 }
-      { Les répertoires sont affichés dans ListBox2 }
-      if ((Info.Attr and faDirectory) = 0) then
-      begin
+      until FindNext(Rec) <> 0;
+    finally
+      FindClose(Rec);
+    end;
+
+  If not InDir then
+    exit;
+
+  if FindFirst(Path + '*.*', faDirectory, Rec) = 0 then
+    try
+      repeat
+        if ((Rec.Attr and faDirectory) <> 0) and (Rec.Name <> '.') and (Rec.Name <> '..') then
+          FileSearch_FIC(Path + Rec.Name, Filename, True, N_user, Cle_Session);
+      until FindNext(Rec) <> 0;
+    finally
+      FindClose(Rec);
+    end;
+end;
+
+procedure TForm1.FileSearch(const PathName, Filename: string; const InDir: Boolean; N_user: Integer; Cle_Session: string);
+var
+  Rec: TSearchRec;
+  Path: string;
+begin
+  Path := IncludeTrailingBackslash(PathName);
+  if FindFirst(Path + Filename, faAnyFile - faDirectory, Rec) = 0 then
+    try
+      repeat
         wq_EXCEL_READ_FIC.Append;
-        wq_EXCEL_READ_FIC.fieldbyname('N_user').Asinteger := N_user;
-        wq_EXCEL_READ_FIC.fieldbyname('Cle_Session').AsAnsiString := Cle_Session;
-        wq_EXCEL_READ_FIC.fieldbyname('Repertoire').AsAnsiString := Chemin;
-        wq_EXCEL_READ_FIC.fieldbyname('Fichier').AsAnsiString := Info.FindData.cFileName;
+        wq_EXCEL_READ_FIC.FieldByName('N_user').Asinteger := N_user;
+        wq_EXCEL_READ_FIC.FieldByName('Cle_Session').AsAnsiString := Cle_Session;
+        wq_EXCEL_READ_FIC.FieldByName('Repertoire').AsAnsiString := Path;
+        wq_EXCEL_READ_FIC.FieldByName('Fichier').AsAnsiString := Rec.Name;
         wq_EXCEL_READ_FIC.post;
-      end;
 
-      { Il faut ensuite rechercher l'entrée suivante }
-    until FindNext(Info) <> 0;
+      until FindNext(Rec) <> 0;
+    finally
+      FindClose(Rec);
+    end;
 
-    { Dans le cas ou une entrée au moins est trouvée il faut }
-    { appeler FindClose pour libérer les ressources de la recherche }
-    FindClose(Info);
-  end;
+  If not InDir then
+    exit;
+
+  if FindFirst(Path + '*.*', faDirectory, Rec) = 0 then
+    try
+      repeat
+        if ((Rec.Attr and faDirectory) <> 0) and (Rec.Name <> '.') and (Rec.Name <> '..') then
+          FileSearch(Path + Rec.Name, Filename, True, N_user, Cle_Session);
+      until FindNext(Rec) <> 0;
+    finally
+      FindClose(Rec);
+    end;
 end;
 
 procedure TForm1.Read_Excel_Log(Code_Log, Message_Log, Fichier, Feuille: string; N_user: Integer; Cle_Session: string);
 begin
 
   wq_EXCEL_READ_LOG.Append;
-  wq_EXCEL_READ_LOG.fieldbyname('N_user').Asinteger := N_user;
-  wq_EXCEL_READ_LOG.fieldbyname('Cle_Session').AsAnsiString := Cle_Session;
-  wq_EXCEL_READ_LOG.fieldbyname('Fichier').AsAnsiString := Fichier;
-  wq_EXCEL_READ_LOG.fieldbyname('Feuille').AsAnsiString := Feuille;
-  wq_EXCEL_READ_LOG.fieldbyname('Code_Log').AsAnsiString := Code_Log;
-  wq_EXCEL_READ_LOG.fieldbyname('Message_Log').AsAnsiString := Message_Log;
-  wq_EXCEL_READ_LOG.fieldbyname('Date_Log').asdatetime := now;
+  wq_EXCEL_READ_LOG.FieldByName('N_user').Asinteger := N_user;
+  wq_EXCEL_READ_LOG.FieldByName('Cle_Session').AsAnsiString := Cle_Session;
+  wq_EXCEL_READ_LOG.FieldByName('Fichier').AsAnsiString := Fichier;
+  wq_EXCEL_READ_LOG.FieldByName('Feuille').AsAnsiString := Feuille;
+  wq_EXCEL_READ_LOG.FieldByName('Code_Log').AsAnsiString := Code_Log;
+  wq_EXCEL_READ_LOG.FieldByName('Message_Log').AsAnsiString := Message_Log;
+  wq_EXCEL_READ_LOG.FieldByName('Date_Log').asdatetime := now;
   wq_EXCEL_READ_LOG.post;
 
 end;

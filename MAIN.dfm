@@ -3,8 +3,8 @@ object Form1: TForm1
   Top = 233
   BorderStyle = bsNone
   Caption = 'GENEsys SP'
-  ClientHeight = 34
-  ClientWidth = 226
+  ClientHeight = 32
+  ClientWidth = 225
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -24,13 +24,12 @@ object Form1: TForm1
   object fcImageForm1: TfcImageForm
     Left = 0
     Top = 0
-    Width = 226
-    Height = 34
+    Width = 225
+    Height = 32
     Align = alClient
     Picture.Data = {07544269746D617000000000}
     DragTolerance = 5
     TransparentColor = clBtnFace
-    ExplicitWidth = 225
     ExplicitHeight = 73
     RegionData = {00000000}
   end
@@ -278,7 +277,7 @@ object Form1: TForm1
     Left = 552
     Top = 96
     Bitmap = {
-      494C010143004500380010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010143004500500010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000001001000001002000000000000010
       0100000000000000000000000000000000000000000000000000000000000000
       00000000000000000000000000000000000000000000DFEFFBFF000000000000
@@ -2586,7 +2585,7 @@ object Form1: TForm1
     Left = 560
     Top = 144
     Bitmap = {
-      494C010164016701380010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010164016701500010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       000000000000360000002800000040000000A0050000010020000000000000A0
       0500000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -14988,7 +14987,7 @@ object Form1: TForm1
   object SP_EXCEL_READ_MOVE: TADOStoredProc
     Connection = Database
     Parameters = <>
-    Left = 384
+    Left = 424
     Top = 144
   end
   object SP_EXCEL_READ_END: TADOStoredProc
@@ -15132,5 +15131,44 @@ object Form1: TForm1
     Parameters = <>
     Left = 216
     Top = 592
+  end
+  object wq_Session0: TwwQuery
+    DatabaseName = 'DBintegrator'
+    SQL.Strings = (
+      'SELECT ID =cast(NEWID() as varchar(100))')
+    ValidateWithMask = True
+    Left = 576
+    Top = 304
+    object wq_Session0ID: TStringField
+      FieldName = 'ID'
+      Size = 100
+    end
+  end
+  object SP_LISTE_FICHIERS: TADOStoredProc
+    Connection = Database
+    Parameters = <>
+    Left = 304
+    Top = 392
+  end
+  object wq_LISTE_FICHIERS: TADOQuery
+    Connection = Database
+    Parameters = <>
+    SQL.Strings = (
+      'SELECT '
+      '   Nom=Cast(o.[name] AS varchar(150))'
+      'FROM dbo.sysobjects o '
+      'WHERE '
+      '    xtype in ( '#39'P'#39')'
+      '')
+    Left = 336
+    Top = 448
+  end
+  object wq_Session: TADOQuery
+    Connection = Database
+    Parameters = <>
+    SQL.Strings = (
+      'SELECT ID =cast(NEWID() as varchar(100))')
+    Left = 488
+    Top = 232
   end
 end
